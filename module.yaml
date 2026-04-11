@@ -1172,11 +1172,6 @@ containers:
         host_subpath: container-mounts/wallabag/data
         container_path: /var/www/wallabag/data
     default_disabled: true
-  web-admin:
-    description: Self-hosted container management dashboard (Tailscale sidecar; the backend is a PM2 process on the host bound to 127.0.0.1)
-    category: system-monitoring
-    uses_tailscale: true
-    start_order: "001"
   your-spotify:
     description: Personal Spotify listening statistics
     category: favorites
