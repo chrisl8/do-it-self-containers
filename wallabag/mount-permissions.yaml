@@ -1,0 +1,5 @@
+mounts:
+  "${VOL_WALLABAG_DATA:-~/container-data}/container-mounts/wallabag/data":
+    owner: "nobody:nogroup"
+    mode: "775"
+    recursive: true

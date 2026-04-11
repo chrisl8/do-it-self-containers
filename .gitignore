@@ -1,0 +1,37 @@
+# Runtime state (generated on the platform, not part of the module source)
+.env
+tailscale.env
+tailscale-state/
+config-personal/
+compose.override.yaml
+
+# External git repos (cloned at runtime via all-containers.sh --update-git-repos)
+homepage/dashboard-icons/
+minecraft/docker-minecraft-bedrock-server/
+tsidp/tsidp/
+valheim/valheim-server-docker/
+meshtastic/meshtastic/
+
+# Generated config targets
+homepage/config/
+the-lounge/config/
+searxng/etc/
+nextcloud/html/
+
+# User-specific content (defaults shipped in config-defaults/)
+homepage/icons/*
+!homepage/icons/.gitkeep
+!homepage/icons/do-it-self.svg
+homepage/images/*
+!homepage/images/.gitkeep
+
+# Symlinks to user-specific paths
+forgejo/app.ini
+cloudflared/config
+code/home
+stirling-pdf/configs
+recon/config-links
+
+# Runtime data
+filez/copyparty.conf
+paste/paste.env

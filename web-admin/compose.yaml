@@ -1,0 +1,41 @@
+services:
+  ts:
+    container_name: web-admin-ts
+    image: tailscale/tailscale
+    environment:
+      - TS_HOSTNAME=admin
+      - TS_EXTRA_ARGS=--advertise-tags=tag:container
+      - TS_SERVE_CONFIG=/config/tailscale-config.json
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_ENABLE_HEALTH_CHECK=true
+      - TS_LOCAL_ADDR_PORT=127.0.0.1:9002
+      - TS_AUTHKEY=${TS_AUTHKEY}
+    # The web-admin backend is a PM2 process on the host (it has to be on
+    # the host so it can run scripts as the maintainer's user, with sudo,
+    # and share those scripts with cron and SSH sessions). It listens on a
+    # Unix domain socket at backend/sockets/web-admin.sock. This sidecar
+    # bind-mounts that directory and Tailscale Serve proxies
+    # https://admin.<tailnet>.ts.net/* to the socket via the JSON config
+    # in tailscale-config/tailscale-config.json. Filesystem permissions on
+    # the socket file (chmod 0660 set by server.js) are the access
+    # control: only processes that bind-mount the socket file can connect.
+    # Nothing on the LAN, the public internet, any other tailnet device
+    # other than this sidecar's MagicDNS hostname, or any other docker
+    # container can reach the backend.
+    volumes:
+      - ./tailscale-state:/var/lib/tailscale
+      - ./tailscale-config:/config
+      - ./backend/sockets:/sockets
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    # https://github.com/tailscale/tailscale/issues/12758#issuecomment-2564770640
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9002/healthz"]
+      start_period: 120s
+      start_interval: 5s
+      interval: 5m
+      timeout: 5s
+      retries: 3
+    restart: on-failure
