@@ -1,7 +1,7 @@
 name: do-it-self-containers
 description: All generally-useful self-hosted container stacks
 maintainer: chrisl8
-url: ""
+url: https://github.com/chrisl8/do-it-self-containers.git
 categories:
   my-stuff:
     label: My Stuff
