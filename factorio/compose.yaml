@@ -6,8 +6,8 @@ services:
       - ${VOL_FACTORIO_DATA:-~/container-data}/container-mounts/factorio/data:/factorio
     network_mode: service:ts
     environment:
-      - USERNAME=FactorioProfileName
-      - TOKEN=FactorioProfileToken
+      - USERNAME=${FACTORIO_USERNAME}
+      - TOKEN=${FACTORIO_TOKEN}
       - PRESET=Default
       - DLC_SPACE_AGE=true
     healthcheck:
