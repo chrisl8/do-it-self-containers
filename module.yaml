@@ -701,6 +701,10 @@ containers:
         host_subpath: container-mounts/nextcloud/elasticsearch_data
         container_path: /usr/share/elasticsearch/data
     default_disabled: true
+    cron_jobs:
+      - schedule: "*/5 * * * *"
+        script: nextcloud-cron-job.sh
+        description: Nextcloud background jobs
   nextcloud-whiteboard:
     description: Collaborative whiteboard for Nextcloud
     homepage_group: Productivity
