@@ -21,7 +21,7 @@ services:
       retries: 3
     labels:
       # For homepage
-      - homepage.group=System Monitoring
+      - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=Beszel
       - homepage.weight=10
       - homepage.icon=/dashboard-icons/svg/beszel.svg

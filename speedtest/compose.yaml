@@ -18,7 +18,7 @@ services:
       - PUBLIC_DASHBOARD=true
     labels:
       # For homepage
-      - homepage.group=System Monitoring
+      - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=Speedtest
       - homepage.weight=40
       - homepage.icon=/dashboard-icons/png/speedtest-tracker.png

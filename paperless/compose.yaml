@@ -68,7 +68,7 @@ services:
     # Note that papaerless (webserver) has a health check built into the Dockerfile, so no need to add it here.
     labels:
       # For homepage
-      - homepage.group=My Stuff
+      - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=PaperlessNGX
       - homepage.weight=10
       - homepage.icon=/dashboard-icons/svg/paperless-ngx.svg
@@ -178,7 +178,7 @@ services:
       - TS_LOCAL_ADDR_PORT=127.0.0.1:9002
       - TS_AUTHKEY=${TS_AUTHKEY}
     volumes:
-      - ./tailscale-state:/var/lib/tailscale
+      - ${TS_STATE_HOST_DIR}:/var/lib/tailscale
       - ./tailscale-config:/config
       - /dev/net/tun:/dev/net/tun
     cap_add:

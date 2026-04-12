@@ -21,7 +21,7 @@ services:
       - ${VOL_TSIDP_TSIDP:-~/container-data}/container-mounts/tsidp/tsidp:/data
     labels:
       # For homepage
-      - homepage.group=Tools
+      - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=Tailscale OIDC IdP (New)
       - homepage.weight=40
       - homepage.icon=/dashboard-icons/svg/tailscale.svg

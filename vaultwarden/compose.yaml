@@ -10,7 +10,7 @@ services:
       - vaultwarden-net
     labels:
       # For homepage
-      - homepage.group=Tools
+      - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=Vaultwarden
       - homepage.weight=40
       - homepage.icon=/dashboard-icons/svg/vaultwarden.svg
@@ -28,7 +28,7 @@ services:
       - TS_LOCAL_ADDR_PORT=127.0.0.1:9002
       - TS_AUTHKEY=${TS_AUTHKEY}
     volumes:
-      - ./tailscale-state:/var/lib/tailscale
+      - ${TS_STATE_HOST_DIR}:/var/lib/tailscale
       - ./tailscale-config:/config
       - /dev/net/tun:/dev/net/tun
     cap_add:

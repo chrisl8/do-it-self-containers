@@ -33,7 +33,7 @@ services:
       - ${VOL_KOPIA_TMP:-~/container-data}/container-mounts/kopia/tmp:/tmp:shared
     labels:
       # For homepage
-      - homepage.group=Favorites
+      - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=Kopia
       - homepage.weight=20
       - homepage.icon=/dashboard-icons/svg/kopia.svg
