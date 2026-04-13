@@ -8,3 +8,69 @@
 # https://gethomepage.dev/latest/configs/settings/
 
 title: Console
+target: _self
+headerStyle: boxedWidgets
+statusStyle: basic
+layout:
+  Top:
+    header: false
+    style: row
+    columns: 4
+    useEqualHeights: true
+  TopServices:
+    header: false
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Productivity:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Finance:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Communication:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Reading:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Media:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Downloads:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Gaming:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Desktop Apps:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Tools:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Development:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Personal Projects:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  System Monitoring:
+    style: row
+    columns: 4
+    useEqualHeights: true
+  Infrastructure:
+    style: row
+    columns: 4
+    useEqualHeights: true
