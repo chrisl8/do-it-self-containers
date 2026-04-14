@@ -1,0 +1,8 @@
+# Docker daemon creates missing bind-mount directories as root:root.
+# merge-homepage-config.js and the container (user 1000:1000) both need
+# write access to these directories.
+mounts:
+  ${PWD}/config:
+    owner: "1000:1000"
+  ${PWD}/dashboard-icons:
+    owner: "1000:1000"
