@@ -6,7 +6,7 @@ services:
     volumes:
       - ${VOL_FORMBRICKS_DATA:-~/container-data}/container-mounts/formbricks/data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${FORMBRICKS_POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
       start_period: 120s
@@ -57,7 +57,7 @@ services:
       timeout: 30s
       retries: 5
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@formbricks_postgres:5432/formbricks?schema=public
+      - DATABASE_URL=postgresql://postgres:${FORMBRICKS_POSTGRES_PASSWORD}@formbricks_postgres:5432/formbricks?schema=public
       - REDIS_URL=redis://formbricks_redis:6379
       - EMAIL_VERIFICATION_DISABLED=1
       - PASSWORD_RESET_DISABLED=1

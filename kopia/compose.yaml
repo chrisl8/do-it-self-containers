@@ -9,7 +9,6 @@ services:
     command:
       - server
       - start
-      - --disable-csrf-token-checks
       # - --tls-generate-cert
       - --tls-cert-file=/app/config/kopia.cert
       - --tls-key-file=/app/config/kopia.key
