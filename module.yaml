@@ -358,6 +358,7 @@ containers:
     uses_docker_gid: true
     start_order: "002"
     monitor_all_mounts: true
+    protected: true
     git_repos:
       dashboard-icons:
         url: https://github.com/homarr-labs/dashboard-icons.git
@@ -394,6 +395,7 @@ containers:
     tags: []
     uses_tailscale: false
     start_order: "000"
+    protected: true
     volumes:
       db:
         var: VOL_INFISICAL_DB
