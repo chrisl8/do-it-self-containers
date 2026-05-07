@@ -134,6 +134,12 @@ services:
     volumes:
       - ${VOL_RECON_QBITTORRENT_CONFIG:-~/container-data}/container-mounts/recon/qbittorrent/config:/config
       - ${VOL_RECON_DATA_MEDIA:-~/container-data}/container-mounts/recon/data/media:/media/arr
+      # Ships 10-clean-stale-ipc.sh via config-defaults. LSIO scans
+      # /custom-cont-init.d at the container root, NOT under /config.
+      # Without this cleanup, qbittorrent v5 silently exits 0 if it finds
+      # an orphaned ipc-socket from an ungraceful prior shutdown, and s6
+      # restart-loops the supervised process forever.
+      - ./custom-cont-init.d:/custom-cont-init.d:ro
     labels:
       - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=qBittorrent
