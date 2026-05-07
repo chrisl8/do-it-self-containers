@@ -10,6 +10,7 @@ services:
       - ${VOL_DIUN_DATA:-~/container-data}/container-mounts/diun/data:/data
       - ${VOL_DIUN_SCRIPT:-~/container-data}/container-mounts/diun/script:/script
       - ./diun.yml:/diun.yml:ro
+      - ./diunUpdate.sh:/diunUpdate.sh:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=America/Chicago
