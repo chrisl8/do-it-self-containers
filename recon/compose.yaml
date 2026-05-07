@@ -420,11 +420,14 @@ services:
       SEARCH_MISSING: True
       DETECT_DELETIONS: True
       # --- Instances ---
+      # All targets share gluetun's network namespace, so reach them via
+      # localhost. qBittorrent's LocalHostAuth=false then skips the cookie
+      # auth that would otherwise be required over Tailscale.
       SONARR: >
-        - base_url: "http://recon.$TS_DOMAIN:8989"
+        - base_url: "http://localhost:8989"
           api_key: "$SONARR_API_KEY"
       RADARR: >
-        - base_url: "http://recon.$TS_DOMAIN:7878"
+        - base_url: "http://localhost:7878"
           api_key: "$RADARR_API_KEY"
       # READARR: >
       #   - base_url: "http://readarr:8787"
@@ -436,12 +439,17 @@ services:
       #   - base_url: "http://whisparr:6969"
       #     api_key: "$WHISPARR_API_KEY"
       # --- Download Clients ---
-      QBITTORRENT: >
-        - base_url: "http://recon.$TS_DOMAIN:8085"
+      # qBittorrent block intentionally omitted: decluttarr :latest hardcodes
+      # the legacy "SID" cookie name, which qBittorrent 4.6+ renamed to
+      # QBT_SID_<port>, so setup() crashes during cookie refresh. Tracked
+      # upstream as ManiMatter/decluttarr#351 / fix PR #352 (unmerged; repo
+      # is currently looking for maintainers per #344). The *arrs reach
+      # qBittorrent on their own, so most decluttarr jobs still function.
       SABNZBD: >
-        - base_url: "http://recon.$TS_DOMAIN:8086"
+        - base_url: "http://localhost:8086"
           api_key: "$SABNZBD_API_KEY"
     restart: on-failure
+    network_mode: "service:gluetun"
     depends_on:
       gluetun:
         condition: service_healthy
