@@ -28,7 +28,7 @@ services:
       - homepage.href=https://tsidp.${TS_DOMAIN}
     healthcheck:
       test: ["CMD-SHELL", "pgrep tsidp-server"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s

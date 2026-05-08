@@ -47,7 +47,7 @@ services:
       - infisical-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U infisical"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -62,7 +62,7 @@ services:
       - infisical-net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s

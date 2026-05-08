@@ -14,7 +14,7 @@ services:
     restart: on-failure
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -35,7 +35,7 @@ services:
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -102,7 +102,7 @@ services:
           "CMD-SHELL",
           "wget -qO - http://127.0.0.1:3000/api/v1/health | grep -q '\"status\"\\s*:\\s*\"ok\"'",
         ]
-      start_period: 120s
+      start_period: 600s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -166,7 +166,7 @@ services:
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "bundle exec sidekiqmon processes | grep Processes"]
-      start_period: 120s
+      start_period: 600s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -205,7 +205,7 @@ services:
     restart: on-failure
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9002/healthz"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s

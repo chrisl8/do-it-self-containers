@@ -16,7 +16,7 @@ services:
         condition: service_healthy
     healthcheck:
       test: curl --fail http://localhost/api/ | grep "Hello" || exit 1
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -39,7 +39,7 @@ services:
       - ${VOL_YOUR_SPOTIFY_DB:-~/container-data}/container-mounts/your-spotify/db:/data/db
     healthcheck:
       test: echo 'db.runCommand({find:"app_db_name.devUser"}).ok' | mongosh --host localhost --quiet | grep -q 1
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -68,7 +68,7 @@ services:
     # https://github.com/tailscale/tailscale/issues/12758#issuecomment-2564770640
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9002/healthz"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s

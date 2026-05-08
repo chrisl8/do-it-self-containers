@@ -18,7 +18,7 @@ services:
           "CMD-SHELL",
           "wget -qO - http://localhost:5007/api-docs/ | grep -q '<title>Swagger UI</title>'",
         ]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -44,7 +44,7 @@ services:
     # https://github.com/tailscale/tailscale/issues/12758#issuecomment-2564770640
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9002/healthz"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s

@@ -86,7 +86,7 @@ services:
     # https://stackoverflow.com/questions/67904609/how-do-you-perform-a-healthcheck-in-the-redis-docker-image
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -120,7 +120,7 @@ services:
       POSTGRES_PASSWORD: ${PAPERLESS_POSTGRES_PASSWORD}
     healthcheck:
       test: pg_isready
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -148,7 +148,7 @@ services:
       # https://gotenberg.dev/docs/routes#health-check-route
     healthcheck:
       test: 'curl --fail http://localhost:3000/health 2>/dev/null | grep -o "\"status\":\"up\"," | wc -l | [ "`cat`" = "3" ] || exit 1'
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -161,7 +161,7 @@ services:
       - paperless-net
     healthcheck:
       test: pgrep -f tika || exit 1
-      start_period: 120s
+      start_period: 600s
       start_interval: 5s
       interval: 5m
       timeout: 5s
@@ -188,7 +188,7 @@ services:
     # https://github.com/tailscale/tailscale/issues/12758#issuecomment-2564770640
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9002/healthz"]
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s

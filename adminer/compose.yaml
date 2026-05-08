@@ -9,7 +9,7 @@ services:
     network_mode: "host"
     healthcheck:
       test: (php -r "readfile('http://localhost:8080/');" | grep -q '<title>Login - Adminer</title>') || exit 1
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s

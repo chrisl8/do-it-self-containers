@@ -25,7 +25,7 @@ services:
       - "diun.enable=true"
     healthcheck:
       test: diun image list
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s

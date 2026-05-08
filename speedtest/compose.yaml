@@ -27,7 +27,7 @@ services:
       - homepage.widget.url=http://${HOST_NAME}.${TS_DOMAIN}:8765
     healthcheck:
       test: curl -fSs APP_URL/api/healthcheck | jq -r .message || exit 1
-      start_period: 120s
+      start_period: 300s
       start_interval: 5s
       interval: 5m
       timeout: 5s
