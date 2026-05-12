@@ -138,7 +138,7 @@ case "$IMAGE_NAME" in
     ac)
         OUTPUT_IMAGE_NAME="filez"
         ;;
-    prowlarr|sonarr|radarr|lidarr|mylar3|lazylibrarian|qbittorrent|sabnzbd|bazarr)
+    prowlarr|sonarr|radarr|lidarr|mylar3|lazylibrarian|qbittorrent|sabnzbd|bazarr|decluttarr)
         OUTPUT_IMAGE_NAME="recon"
         ;;
     actual-http-api)
