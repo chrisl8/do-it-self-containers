@@ -1,0 +1,61 @@
+services:
+  collabora:
+    image: collabora/code
+    container_name: collabora
+    environment:
+      # Public hostname Collabora is reached at (TLS is terminated by the ts sidecar)
+      - server_name=collabora.${TS_DOMAIN}
+      # WOPI host allowed to embed Collabora = our Nextcloud
+      - aliasgroup1=https://nextcloud.${TS_DOMAIN}:443
+      # ts sidecar terminates TLS, so run plain HTTP internally but know TLS is upstream
+      - extra_params=--o:ssl.enable=false --o:ssl.termination=true
+      - username=${COLLABORA_USERNAME}
+      - password=${COLLABORA_PASSWORD}
+      - DONT_GEN_SSL_CERT=true
+    # loolforkit needs to create device nodes
+    cap_add:
+      - MKNOD
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9980/"]
+      start_period: 300s
+      start_interval: 5s
+      interval: 5m
+      timeout: 5s
+      retries: 3
+    networks:
+      - collabora-net
+    restart: on-failure
+  ts:
+    container_name: collabora-ts
+    image: tailscale/tailscale
+    environment:
+      - TS_HOSTNAME=collabora
+      - TS_EXTRA_ARGS=--advertise-tags=tag:container
+      - TS_SERVE_CONFIG=/config/tailscale-config.json
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_ENABLE_HEALTH_CHECK=true
+      - TS_LOCAL_ADDR_PORT=127.0.0.1:9002
+      - TS_AUTHKEY=${TS_AUTHKEY}
+    volumes:
+      - ${TS_STATE_HOST_DIR}:/var/lib/tailscale
+      - ./tailscale-config:/config
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    # https://github.com/tailscale/tailscale/issues/12758#issuecomment-2564770640
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9002/healthz"]
+      start_period: 300s
+      start_interval: 5s
+      interval: 5m
+      timeout: 5s
+      retries: 3
+    networks:
+      - collabora-net
+    depends_on:
+      collabora:
+        condition: service_healthy
+    restart: on-failure
+networks:
+  collabora-net:
