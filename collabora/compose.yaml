@@ -15,8 +15,9 @@ services:
     # loolforkit needs to create device nodes
     cap_add:
       - MKNOD
+    # collabora/code ships curl (not wget); "/" returns "OK" when healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9980/"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9980/"]
       start_period: 300s
       start_interval: 5s
       interval: 5m
