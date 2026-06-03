@@ -24,7 +24,9 @@ services:
     labels:
       - "diun.enable=true"
     healthcheck:
-      test: diun image list
+      # Built-in healthcheck command (diun >= v4.33.0) queries the gRPC server,
+      # scheduler, and metrics; exits 0 only when Diun reports healthy.
+      test: diun healthcheck
       start_period: 300s
       start_interval: 5s
       interval: 5m
