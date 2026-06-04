@@ -34,17 +34,32 @@ References:
 
 **Workarounds** (roughly most → least effective):
 
-1. **Edit spreadsheets in mobile Safari instead of the Nextcloud iOS app.** Open
-   `nextcloud.<TS_DOMAIN>` in Safari and open the sheet there; this sidesteps the
-   app's swipe-to-close gesture entirely. Add a home-screen shortcut for
-   convenience.
-2. **Pinch-zoom out, then tap** the target cell (e.g. column A) rather than
+1. **Install Nextcloud as a standalone home-screen PWA and edit there — not in
+   the native Nextcloud app.** In mobile Safari open `nextcloud.<TS_DOMAIN>` →
+   Share → **Add to Home Screen**. Launched from that icon, Nextcloud runs in
+   standalone mode with **no Safari chrome (no edge-swipe-back) and is not the
+   native app (no swipe-to-close)** — so the gesture that strands you on the blue
+   loading screen no longer exists, rather than merely being routed around. This
+   is the single highest-leverage fix and costs nothing; the offending gesture
+   fires at the OS/app layer *before* Collabora sees the touch, so it cannot be
+   disabled from the server — removing the gesture (via the PWA) is the only
+   server-independent fix. Test this first.
+2. **Use a tablet (e.g. iPad) for heavy spreadsheet work.** Collabora's tablet UI
+   is a substantially better experience than its phone UI (full toolbar, far less
+   pinch-and-jab) and is independent of this gesture bug. Biggest quality jump
+   available short of a desktop.
+3. **Pinch-zoom out, then tap** the target cell (e.g. column A) rather than
    swiping to it; zoom back in afterward. A finger jab never triggers the edge
    gesture.
-3. **Start the scroll from the interior of the sheet**, not near the left screen
+4. **Start the scroll from the interior of the sheet**, not near the left screen
    edge, and keep the drag short — the close gesture is most easily triggered by
    edge-to-edge horizontal drags.
-4. **Do heavy spreadsheet editing on a desktop.** Mobile Calc in Collabora is
+5. **Do heavy spreadsheet editing on a desktop.** Mobile Calc in Collabora is
    rough regardless of this bug.
+
+Note: Collabora is effectively the only viable self-hosted option for editing
+real spreadsheets on mobile. OnlyOffice's in-Nextcloud web editor disallows
+mobile editing, and its native app has been observed to silently fail to save
+(data loss) — so it is not a safe alternative for this workflow.
 
 Track CollaboraOnline/online #11153 for the eventual app-side fix.
