@@ -15,9 +15,10 @@ services:
     # loolforkit needs to create device nodes
     cap_add:
       - MKNOD
-    # collabora/code ships curl (not wget); "/" returns "OK" when healthy
+    # collabora/code ships no curl/wget (dropped in the 26.04 image), but does ship bash;
+    # probe "/" (returns "OK" with HTTP 200 when healthy) via bash's /dev/tcp
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:9980/"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9980; printf 'GET / HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3; grep -q '200 OK' <&3"]
       start_period: 300s
       start_interval: 5s
       interval: 5m
