@@ -72,7 +72,7 @@ case "$IMAGE_NAME" in
     code)
         OUTPUT_IMAGE_NAME="collabora"
         ;;
-    pgvector_pg17)
+    pgvector_pg17|hub)
         OUTPUT_IMAGE_NAME="formbricks"
         ;;
     valkey_8-alpine)
