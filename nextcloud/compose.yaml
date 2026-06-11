@@ -25,8 +25,9 @@ services:
       start_period: 300s
       start_interval: 5s
       interval: 5m
-      timeout: 5s
-      retries: 3
+      # occ spins up PHP — give it slack so a busy disk/backup doesn't flap it
+      timeout: 15s
+      retries: 5
     labels:
       # For homepage
       - homepage.group=${HOMEPAGE_GROUP}
@@ -100,8 +101,9 @@ services:
       start_period: 300s
       start_interval: 5s
       interval: 5m
-      timeout: 5s
-      retries: 3
+      # ES cluster-health curl — give it slack so a busy disk/backup doesn't flap it
+      timeout: 15s
+      retries: 5
     restart: on-failure
   ts-nextcloud:
     container_name: nextcloud-ts

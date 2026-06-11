@@ -55,8 +55,9 @@ services:
       start_period: 300s
       start_interval: 5s
       interval: 5m
-      timeout: 5s
-      retries: 3
+      # Deep check runs a full live search (hits upstream engines) — give it slack so a busy disk/backup doesn't flap it
+      timeout: 15s
+      retries: 5
     depends_on:
       redis:
         condition: service_healthy
