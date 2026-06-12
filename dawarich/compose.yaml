@@ -6,7 +6,19 @@ services:
     image: redis:7.4-alpine
     container_name: dawarich_redis
     user: 1000:1000
-    command: redis-server
+    # Dawarich uses Redis as its Rails cache (reverse-geocode results, keyed by URL) AND
+    # as the Sidekiq job broker. Unbounded (maxmemory 0 / noeviction) that cache grew to
+    # ~11.4 GiB of mostly-cold entries that got paged to swap and pinned the host in swap
+    # (a co-conspirator in the 2026-06-12 livelock). volatile-lru only evicts keys that
+    # have a TTL -- the geocode cache entries all do, Sidekiq's job keys do not -- so the
+    # cache is bounded while pending jobs are never evicted. Raise the 1gb if you want a
+    # bigger geocode cache (each miss re-hits the Photon API).
+    command: redis-server --maxmemory 1gb --maxmemory-policy volatile-lru
+    # Hard cgroup ceiling with swap disabled (memswap_limit == mem_limit): redis stays
+    # entirely in RAM (no repeat of the swap-thrash). maxmemory 1gb keeps it well under
+    # this; if it ever exceeded, a contained cgroup kill + RDB reload recovers it.
+    mem_limit: 1536m
+    memswap_limit: 1536m
     networks:
       - dawarich
     volumes:
