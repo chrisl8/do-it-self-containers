@@ -2,8 +2,8 @@
 services:
   nextcloud:
     # Pinned to a major: Nextcloud refuses to skip majors, so bump deliberately
-    # one major at a time. DIUN still flags 34.0.x patches; watch :latest for the
-    # next-major signal before bumping to 35.
+    # one major at a time. DIUN digest-watches :34 for 34.0.x patches; the
+    # watch_repo label below additionally alerts when a new major (35, ...) ships.
     image: nextcloud:34
     container_name: nextcloud
     volumes:
@@ -43,6 +43,11 @@ services:
       - homepage.widget.username=${USERNAME_FOR_HOMEPAGE}
       - homepage.widget.password=${PASSWORD_FOR_HOMEPAGE}
       - homepage.widget.fields=["freespace", "numfiles"]
+      # DIUN: :34 already digest-watches for 34.x point releases. watch_repo with
+      # a bare-major regex additionally alerts when a NEW major (35, 36, ...)
+      # appears, so we get the signal to plan the next deliberate major upgrade.
+      - diun.watch_repo=true
+      - diun.include_tags=^[0-9]+$
     restart: on-failure
   db:
     container_name: nextcloud-db

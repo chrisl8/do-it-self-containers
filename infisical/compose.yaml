@@ -4,7 +4,9 @@
 services:
   infisical:
     container_name: infisical
-    # Pin to a specific version for stability
+    # Pinned (not floating like the rest of the stack): runs irreversible DB
+    # migrations on startup and is the secret-store every other container
+    # depends on; upgrade deliberately (snapshot the DB first, read the notes).
     image: infisical/infisical:v0.132.2-postgres
     depends_on:
       infisical-db:
@@ -33,6 +35,12 @@ services:
       interval: 5m
       timeout: 10s
       retries: 3
+    labels:
+      # DIUN: the pinned tag's digest never moves, so default digest-watching
+      # never fires. watch_repo enumerates repo tags and alerts on any new
+      # release so we know when to do a deliberate, manual upgrade.
+      - diun.watch_repo=true
+      - diun.include_tags=^v[0-9]+\.[0-9]+\.[0-9]+-postgres$
     restart: on-failure
   infisical-db:
     container_name: infisical-db

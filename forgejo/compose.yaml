@@ -25,6 +25,11 @@ services:
       - homepage.weight=50
       - homepage.icon=/dashboard-icons/svg/forgejo.svg
       - homepage.href=https://forgejo.${TS_DOMAIN}
+      # DIUN: :12 already digest-watches for 12.x point releases. watch_repo with
+      # a bare-major regex additionally alerts when a NEW major (13, ...) appears
+      # so we know to plan a deliberate major upgrade.
+      - diun.watch_repo=true
+      - diun.include_tags=^[0-9]+$
     restart: on-failure
   ts:
     container_name: forgejo-ts
