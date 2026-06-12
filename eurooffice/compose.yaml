@@ -1,0 +1,67 @@
+services:
+  eurooffice-documentserver:
+    # Euro-Office Document Server — sovereign FOSS fork of OnlyOffice Community Edition.
+    # Single container: bundles its own postgres/rabbitmq/redis (no split-out services,
+    # unlike the onlyoffice stack). Mobile web editing is free/un-gated here.
+    image: ghcr.io/euro-office/documentserver
+    container_name: eurooffice-documentserver
+    environment:
+      # JSON Web Token validation — must match the secret entered in the Nextcloud
+      # Euro-Office connector (Settings -> Administration -> Euro-Office)
+      - JWT_ENABLED=true
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_HEADER=Authorization
+      - JWT_IN_BODY=true
+    # forked from onlyoffice/documentserver, so the internal /info endpoint matches;
+    # ts sidecar terminates TLS upstream, document server runs plain HTTP on :80
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
+      start_period: 300s
+      start_interval: 5s
+      interval: 5m
+      timeout: 10s
+      retries: 5
+    stdin_open: true
+    stop_grace_period: 60s
+    volumes:
+      - ${VOL_EUROOFFICE_DATA:-~/container-data}/container-mounts/eurooffice/data:/var/www/onlyoffice/Data
+      - ${VOL_EUROOFFICE_LOG:-~/container-data}/container-mounts/eurooffice/log:/var/log/onlyoffice
+      - ${VOL_EUROOFFICE_CACHE:-~/container-data}/container-mounts/eurooffice/cache:/var/lib/onlyoffice/documentserver/App_Data/cache/files
+      - ${VOL_EUROOFFICE_FONTS:-~/container-data}/container-mounts/eurooffice/fonts:/usr/share/fonts
+    networks:
+      - eurooffice-net
+    restart: on-failure
+  ts:
+    container_name: eurooffice-ts
+    image: tailscale/tailscale
+    environment:
+      - TS_HOSTNAME=eurooffice
+      - TS_EXTRA_ARGS=--advertise-tags=tag:container
+      - TS_SERVE_CONFIG=/config/tailscale-config.json
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_ENABLE_HEALTH_CHECK=true
+      - TS_LOCAL_ADDR_PORT=127.0.0.1:9002
+      - TS_AUTHKEY=${TS_AUTHKEY}
+    volumes:
+      - ${TS_STATE_HOST_DIR}:/var/lib/tailscale
+      - ./tailscale-config:/config
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    # https://github.com/tailscale/tailscale/issues/12758#issuecomment-2564770640
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9002/healthz"]
+      start_period: 300s
+      start_interval: 5s
+      interval: 5m
+      timeout: 5s
+      retries: 3
+    networks:
+      - eurooffice-net
+    depends_on:
+      eurooffice-documentserver:
+        condition: service_healthy
+    restart: on-failure
+networks:
+  eurooffice-net:
