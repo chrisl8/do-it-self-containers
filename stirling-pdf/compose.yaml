@@ -2,6 +2,14 @@ services:
   stirling-pdf:
     container_name: stirling-pdf
     image: stirlingtools/stirling-pdf:V2-Beta
+    # Stirling is a Spring Boot JVM and its image sets MaxRAMPercentage=75, so unbounded its
+    # heap can grow to ~75% of host RAM (~23 GiB on this 31 GiB box) -- the worst of the
+    # host-RAM-ballooning JVMs (see the 2026-06-12 Elasticsearch livelock). JAVA_CUSTOM_OPTS
+    # pins the heap to 1 GiB; mem_limit/memswap_limit hard-bound the container (JVM heap +
+    # the OCR/conversion subprocesses it spawns: tesseract, libreoffice, ghostscript) with
+    # swap disabled. Raise both together if a large conversion ever gets OOM-killed.
+    mem_limit: 2g
+    memswap_limit: 2g
     volumes:
       - ${VOL_STIRLING_PDF_TESSDATA:-~/container-data}/container-mounts/stirling-pdf/tessdata:/usr/share/tessdata #Required for extra OCR languages
       - ${VOL_STIRLING_PDF_CONFIGS:-~/container-data}/container-mounts/stirling-pdf/configs:/configs
@@ -11,6 +19,9 @@ services:
       - DOCKER_ENABLE_SECURITY=false
       - INSTALL_BOOK_AND_ADVANCED_HTML_OPS=true
       - LANGS=en_US
+      # Pin JVM heap (image default is MaxRAMPercentage=75 of host RAM). -Xmx wins over the
+      # percentage; 1 GiB is ample for the Spring Boot app (heavy work runs in subprocesses).
+      - JAVA_CUSTOM_OPTS=-Xmx1024m
     networks:
       - stirling-pdf-net
     healthcheck:
