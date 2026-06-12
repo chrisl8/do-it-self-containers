@@ -157,6 +157,14 @@ services:
   tika:
     container_name: paperless-tika
     image: docker.io/apache/tika
+    # Apache Tika is a JVM; with no ceiling its heap defaults to MaxRAMPercentage 25% of host RAM
+    # (~7.75 GiB on neuromancer's 31 GiB) -- the same host-RAM-ballooning footgun that let the
+    # nextcloud Elasticsearch JVM livelock the box on 2026-06-12. Modern JVMs are cgroup-aware, so a
+    # mem_limit makes Tika size its heap to ~25% of the LIMIT (~256 MB) instead of the host. 1 GiB
+    # leaves headroom for off-heap. memswap_limit equal disables swap -> contained cgroup OOM-kill
+    # (restart: on-failure brings it back) instead of a whole-host stall.
+    mem_limit: 1g
+    memswap_limit: 1g
     networks:
       - paperless-net
     healthcheck:
