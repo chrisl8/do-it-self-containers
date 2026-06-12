@@ -1,7 +1,10 @@
 # https://hub.docker.com/_/nextcloud/
 services:
   nextcloud:
-    image: nextcloud
+    # Pinned to a major: Nextcloud refuses to skip majors, so bump deliberately
+    # one major at a time. DIUN still flags 34.0.x patches; watch :latest for the
+    # next-major signal before bumping to 35.
+    image: nextcloud:34
     container_name: nextcloud
     volumes:
       - ${VOL_NEXTCLOUD_HTML:-~/container-data}/container-mounts/nextcloud/html:/var/www/html
@@ -83,9 +86,19 @@ services:
     container_name: nextcloud-elasticsearch
     # The github repo for the plugin says it only works with version 8, so this may be unwise:
     image: elasticsearch:9.1.0
+    # Hard memory cap. Unbounded, this JVM grew to ~15.6 GiB and livelocked the 31 GiB host on 2026-06-12
+    # (memory-pressure -> dirty-page writeback stall -> every storage task wedged in D-state, OOM killer
+    # never ran). mem_limit + memswap_limit equal disables swap for this container, so a runaway ES gets a
+    # contained cgroup OOM-kill (restart: on-failure brings it back) instead of taking down the whole box.
+    mem_limit: 1536m
+    memswap_limit: 1536m
     # The install script, mentioned above, # https://github.com/nextcloud/vm/blob/main/apps/fulltextsearch.sh recommends
     # some more settings that I left out. If you run into trouble, you can try them.
     environment:
+      # Cap the JVM heap. ES sizes its heap to ~50% of visible RAM by default; on this shared host that meant
+      # ~15.6 GiB. 512m is ample for a personal Nextcloud full-text index. Keep heap <= ~50% of mem_limit so
+      # there is headroom for Lucene off-heap/mmap usage under the cgroup ceiling.
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
       - discovery.type=single-node
       # Use this to enable Basic Authentication:
       - xpack.security.enabled=true
