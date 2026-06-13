@@ -5,6 +5,14 @@ services:
     # unlike the onlyoffice stack). Mobile web editing is free/un-gated here.
     image: ghcr.io/euro-office/documentserver
     container_name: eurooffice-documentserver
+    # Defensive memory backstop on a RAM-tight host that livelocked 2026-06-12.
+    # This OnlyOffice-family server is bounded by editing sessions (no unbounded
+    # cache / no JVM auto-sizing to host RAM), so this ceiling sits well above
+    # real use — it only contains a pathological runaway as a cgroup OOM-kill
+    # (restart: on-failure recovers) instead of letting it take the box down.
+    # memswap_limit == mem_limit disables swap. Raise if heavy edits ever OOM.
+    mem_limit: 3g
+    memswap_limit: 3g
     environment:
       # JSON Web Token validation — must match the secret entered in the Nextcloud
       # Euro-Office connector (Settings -> Administration -> Euro-Office)
