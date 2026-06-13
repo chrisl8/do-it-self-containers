@@ -84,7 +84,7 @@ case "$IMAGE_NAME" in
     factorio_stable)
         OUTPUT_IMAGE_NAME="factorio"
         ;;
-    forgejo_12)
+    forgejo_*)
         OUTPUT_IMAGE_NAME="forgejo"
         ;;
     beszel-agent)
@@ -102,10 +102,16 @@ case "$IMAGE_NAME" in
     rabbitmq_3|postgres_15|documentserver)
         OUTPUT_IMAGE_NAME="onlyoffice"
         ;;
-    elasticsearch_9.1.0)
+    # Unique app images: match on name and IGNORE the tag (glob), so a version
+    # bump (nextcloud 33->34, a new forgejo/infisical release, an ES point
+    # release) keeps mapping to the right folder instead of falling through and
+    # writing a junk "name_tag" entry. Do NOT do this for shared base images
+    # (redis/postgres/valkey) below -- there the tag is what disambiguates which
+    # stack owns them.
+    elasticsearch_*|nextcloud_*)
         OUTPUT_IMAGE_NAME="nextcloud"
         ;;
-    postgres_14-alpine|redis_7-alpine)
+    postgres_14-alpine|redis_7-alpine|infisical_*)
         OUTPUT_IMAGE_NAME="infisical"
         ;;
     gluetun)
