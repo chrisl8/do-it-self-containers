@@ -6,19 +6,17 @@ services:
     image: redis:7.4-alpine
     container_name: dawarich_redis
     user: 1000:1000
-    # Dawarich uses Redis as its Rails cache (reverse-geocode results, keyed by URL) AND
-    # as the Sidekiq job broker. Unbounded (maxmemory 0 / noeviction) that cache grew to
-    # ~11.4 GiB of mostly-cold entries that got paged to swap and pinned the host in swap
-    # (a co-conspirator in the 2026-06-12 livelock). volatile-lru only evicts keys that
-    # have a TTL -- the geocode cache entries all do, Sidekiq's job keys do not -- so the
-    # cache is bounded while pending jobs are never evicted. Raise the 1gb if you want a
-    # bigger geocode cache (each miss re-hits the Photon API).
-    command: redis-server --maxmemory 1gb --maxmemory-policy volatile-lru
-    # Hard cgroup ceiling with swap disabled (memswap_limit == mem_limit): redis stays
-    # entirely in RAM (no repeat of the swap-thrash). maxmemory 1gb keeps it well under
-    # this; if it ever exceeded, a contained cgroup kill + RDB reload recovers it.
-    mem_limit: 1536m
-    memswap_limit: 1536m
+    # Dawarich uses Redis as the Sidekiq job broker + Rails cache. Its big consumer used to
+    # be the reverse-geocode cache (REVERSE_GEOCODING_ENABLED), which grew unbounded to
+    # ~11.4 GiB and pinned the host in swap (the 2026-06-12 livelock). Geocoding is now
+    # DISABLED below, so the cache stays small -- 256mb is ample for the job broker + light
+    # cache. volatile-lru only evicts TTL'd keys, never Sidekiq's (untimed) job keys. If you
+    # ever re-enable geocoding, bump maxmemory (and mem_limit) back up.
+    command: redis-server --maxmemory 256mb --maxmemory-policy volatile-lru
+    # Hard cgroup ceiling, swap disabled (memswap_limit == mem_limit): stays in RAM, no
+    # repeat of the swap-thrash. maxmemory keeps it well under this.
+    mem_limit: 512m
+    memswap_limit: 512m
     networks:
       - dawarich
     volumes:
@@ -89,7 +87,7 @@ services:
       STORE_GEODATA: true
       PHOTON_API_HOST: photon.komoot.io
       PHOTON_API_USE_HTTPS: true
-      REVERSE_GEOCODING_ENABLED: true
+      REVERSE_GEOCODING_ENABLED: false
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_ISSUER: https://tsidp.${TS_DOMAIN}
@@ -164,7 +162,7 @@ services:
       STORE_GEODATA: true
       PHOTON_API_HOST: photon.komoot.io
       PHOTON_API_USE_HTTPS: true
-      REVERSE_GEOCODING_ENABLED: true
+      REVERSE_GEOCODING_ENABLED: false
       OTP_ENCRYPTION_PRIMARY_KEY: ${OTP_ENCRYPTION_PRIMARY_KEY}
       OTP_ENCRYPTION_DETERMINISTIC_KEY: ${OTP_ENCRYPTION_DETERMINISTIC_KEY}
       OTP_ENCRYPTION_KEY_DERIVATION_SALT: ${OTP_ENCRYPTION_KEY_DERIVATION_SALT}
