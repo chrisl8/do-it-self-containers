@@ -78,10 +78,10 @@ case "$IMAGE_NAME" in
     valkey_8-alpine)
         OUTPUT_IMAGE_NAME="searxng"
         ;;
-    immich-machine-learning_release|immich-server_release|postgres_14-vectorchord0.4.3-pgvectors0.2.0|valkey_9)
+    immich-machine-learning_*|immich-server_*|postgres_14-vectorchord0.4.3-pgvectors0.2.0|valkey_9)
         OUTPUT_IMAGE_NAME="immich"
         ;;
-    factorio_stable)
+    factorio_*)
         OUTPUT_IMAGE_NAME="factorio"
         ;;
     forgejo_*)
@@ -96,7 +96,7 @@ case "$IMAGE_NAME" in
     thelounge)
         OUTPUT_IMAGE_NAME="the-lounge"
         ;;
-    karakeep_release)
+    karakeep_*)
         OUTPUT_IMAGE_NAME="karakeep"
         ;;
     rabbitmq_3|postgres_15|documentserver)
@@ -126,13 +126,13 @@ case "$IMAGE_NAME" in
     uptime-kuma)
         OUTPUT_IMAGE_NAME="uptime"
         ;;
-    tsidp_unstable)
+    tsidp_*)
         OUTPUT_IMAGE_NAME="tsidp"
         ;;
-    tinyfilemanager_master)
+    tinyfilemanager_*)
         OUTPUT_IMAGE_NAME="filez"
         ;;
-    stirling-pdf_V2-Beta)
+    stirling-pdf_*)
         OUTPUT_IMAGE_NAME="stirling-pdf"
         ;;
     code-server)
