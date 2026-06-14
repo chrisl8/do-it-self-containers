@@ -1,4 +1,4 @@
 notif:
   script:
-    cmd: "/diunUpdate.sh"
+    cmd: "/notif/diunUpdate.sh"
     dir: "/script"

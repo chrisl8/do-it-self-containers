@@ -10,7 +10,14 @@ services:
       - ${VOL_DIUN_DATA:-~/container-data}/container-mounts/diun/data:/data
       - ${VOL_DIUN_SCRIPT:-~/container-data}/container-mounts/diun/script:/script
       - ./diun.yml:/diun.yml:ro
-      - ./diunUpdate.sh:/diunUpdate.sh:ro
+      # Mount the DIRECTORY, not the script file directly. A single-file bind mount
+      # (./diunUpdate.sh:/diunUpdate.sh) pins to the host file's inode at create time,
+      # so editing the script later (incl. a module re-render, which rewrites the file
+      # = new inode) leaves the running container executing the STALE old script until
+      # it is recreated -- the cause of the recurring pendingContainerUpdates.txt junk.
+      # A directory mount resolves the filename live, so edits take effect without a
+      # recreate. See diun.yml cmd: /notif/diunUpdate.sh
+      - ./notif:/notif:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=America/Chicago
