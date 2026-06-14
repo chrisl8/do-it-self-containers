@@ -462,18 +462,24 @@ services:
   recyclarr:
     # Syncs TRaSH Guides custom formats + quality-profile scores into Sonarr
     # and Radarr (keeps Dolby Vision Profile-5 floored -- see
-    # docs/neuromancer-dolby-vision-fix.md). Config lives on disk at
-    # container-mounts/recon/recyclarr (configs/*.yml + secrets.yml) mounted at
-    # /config; the *arr API keys come from /config/secrets.yml via !secret,
-    # kept out of the version-safe config files. CRON_SCHEDULE runs a daily sync.
+    # docs/neuromancer-dolby-vision-fix.md). The first mount holds runtime state
+    # (state/, logs/, cache) on the SSD; the second overlays /config/configs with
+    # the version-controlled config files shipped in config-defaults/recyclarr-configs
+    # (deployed to ./recyclarr-configs on start), so the TRaSH tuning lives in git,
+    # not just on disk. The *arr API keys are read from the container env via
+    # !env_var (SONARR_API_KEY/RADARR_API_KEY), injected from Infisical /recon at
+    # start time -- so the config files carry no secrets. CRON_SCHEDULE runs a daily sync.
     # https://recyclarr.dev/wiki/installation/docker/
     image: ghcr.io/recyclarr/recyclarr
     container_name: recon-recyclarr
     volumes:
       - ${VOL_RECON_RECYCLARR_CONFIG:-~/container-data}/container-mounts/recon/recyclarr:/config
+      - ./recyclarr-configs:/config/configs
     environment:
       TZ: America/Chicago
       CRON_SCHEDULE: "@daily"
+      SONARR_API_KEY: ${SONARR_API_KEY}
+      RADARR_API_KEY: ${RADARR_API_KEY}
     # The recyclarr image ships no HEALTHCHECK of its own; confirm the binary runs.
     healthcheck:
       test: "recyclarr --version || exit 1"

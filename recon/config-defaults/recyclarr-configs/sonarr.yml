@@ -1,0 +1,76 @@
+# yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
+################################################################################
+## Sonarr — single instance managing TWO TRaSH quality profiles:
+##   - WEB-2160p           (standard TV; trash d1498e7d...)
+##   - [Anime] Remux-1080p (anime;       trash 20e0fc95...)
+##
+## Recyclarr forbids two config instances pointing at the same Sonarr URL
+## ("Split Instances"), so both profiles live here. quality_definition is
+## `series` (a single instance allows only one); anime at 1080p fits within the
+## series size caps, so this is safe for both.
+################################################################################
+
+sonarr:
+  series:
+    base_url: http://localhost:8989
+    api_key: !env_var SONARR_API_KEY
+
+    quality_definition:
+      type: series
+
+    quality_profiles:
+      - trash_id: d1498e7d189fbe6c7110ceaabb7473e6  # WEB-2160p
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 20e0fc959f1f1704bed501f23bdae76f  # [Anime] Remux-1080p
+        reset_unmatched_scores:
+          enabled: true
+
+    # Local overrides on top of the TRaSH profiles:
+    custom_formats:
+      # DV Profile 5 (Dolby Vision with no HDR10 base layer). This is where it
+      # actually bit us — every audited P5 file was a TV episode (Doctor Who
+      # 2023, Spider-Noir, Shrinking). Floor it so HDR10/1080p always wins; only
+      # grabbed if literally nothing else exists.
+      - trash_ids:
+          - 9b27ab6498ec0f31a3353992e19434ca  # DV (w/o HDR fallback)
+        assign_scores_to:
+          - name: WEB-2160p
+            score: -10000
+      # Mild non-English penalty for standard TV only. Deliberately NOT applied
+      # to the anime profile (anime is Japanese audio by nature).
+      - trash_ids:
+          - 69aa1e159f97d860440b04cd6d590c4f  # Language: Not English
+        assign_scores_to:
+          - name: WEB-2160p
+            score: -50
+      # Anime: prefer English dub (Dual Audio = JP + EN) WITHOUT requiring it, so
+      # sub-only airing shows still grab. The right fix for the "kept getting
+      # non-English anime" pain — a positive nudge, not a ban.
+      - trash_ids:
+          - 418f50b10f1907201b6cfdf881f467b7  # Anime Dual Audio
+        assign_scores_to:
+          - name: '[Anime] Remux-1080p'
+            score: 100
+
+    # CF groups for the standard WEB-2160p profile. The anime profile pulls in
+    # its own anime-tier CFs automatically from its quality-profile score set.
+    custom_format_groups:
+      add:
+        - trash_id: e3f37512790f00d0e89e54fe5e790d1c  # [Optional] Golden Rule UHD
+          select:
+            - 9b64dff695c2115facf1b6ea59c9bd07  # x265 (no HDR/DV)
+        - trash_id: 85fae4a2294965b75710ef2989c850eb  # [Streaming Services] HD/UHD boost
+          select:
+            - 218e93e5702f44a68ad9e3c6ba87d2f0  # HD Streaming Boost
+            - 43b3cf48cb385cd3eac608ee6bca7f09  # UHD Streaming Boost
+        - trash_id: 59c3af66780d08332fdc64e68297098f  # [Unwanted] Unwanted Formats
+          select:
+            - 15a05bc7c1a36e2b57fd628f8977e2fc  # AV1
+            - 32b367365729d530ca1c124a0b180c64  # Bad Dual Groups
+            - 85c61753df5da1fb2aab6f2a47426b09  # BR-DISK
+            - 6f808933a71bd9666531610cb8c059cc  # BR-DISK (BTN)
+            - fbcb31d8dabd2a319072b84fc0b7249c  # Extras
+            - 9c11cd3f07101cdba90a2d81cf0e56b4  # LQ
+            - e2315f990da2e2cbfc9fa5b7a6fcfe48  # LQ (Release Title)
+            - 23297a736ca77c0fc8e70f8edd7ee56c  # Upscaled
