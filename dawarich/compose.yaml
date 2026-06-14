@@ -6,12 +6,17 @@ services:
     image: redis:7.4-alpine
     container_name: dawarich_redis
     user: 1000:1000
-    # Dawarich uses Redis as the Sidekiq job broker + Rails cache. Its big consumer used to
-    # be the reverse-geocode cache (REVERSE_GEOCODING_ENABLED), which grew unbounded to
-    # ~11.4 GiB and pinned the host in swap (the 2026-06-12 livelock). Geocoding is now
-    # DISABLED below, so the cache stays small -- 256mb is ample for the job broker + light
-    # cache. volatile-lru only evicts TTL'd keys, never Sidekiq's (untimed) job keys. If you
-    # ever re-enable geocoding, bump maxmemory (and mem_limit) back up.
+    # Dawarich uses Redis as the Sidekiq job broker + Rails cache. Geocoding is genuinely
+    # DISABLED now (no provider host set on the app/sidekiq services below), so neither the
+    # reverse-geocode cache nor the per-point ReverseGeocodingJob flood can grow Redis, and
+    # 256mb is ample for the job broker + light cache.
+    # History: the 2026-06-12 ~11.4 GiB runaway AND the 2026-06-14 sidekiq OOM crash-loop were
+    # BOTH reverse geocoding -- it was never actually off. There is no REVERSE_GEOCODING_ENABLED
+    # switch in dawarich; PHOTON_API_HOST silently enabled it, so the nightly cron enqueued one
+    # ReverseGeocodingJob per point (~420k) into a Sidekiq list. volatile-lru only evicts TTL'd
+    # keys, never Sidekiq's untimed job lists, so Redis hit the cap and OOMed rather than
+    # evicting -- and sidekiq could not even write its heartbeat. If you ever re-enable
+    # geocoding, raise maxmemory + mem_limit to fit that nightly burst.
     command: redis-server --maxmemory 256mb --maxmemory-policy volatile-lru
     # Hard cgroup ceiling, swap disabled (memswap_limit == mem_limit): stays in RAM, no
     # repeat of the swap-thrash. maxmemory keeps it well under this.
@@ -85,9 +90,16 @@ services:
       RAILS_LOG_TO_STDOUT: "true"
       SELF_HOSTED: true
       STORE_GEODATA: true
-      PHOTON_API_HOST: photon.komoot.io
-      PHOTON_API_USE_HTTPS: true
-      REVERSE_GEOCODING_ENABLED: false
+      # Reverse geocoding is intentionally OFF. Dawarich turns it on SOLELY by the presence of
+      # a provider host/key -- DawarichSettings#reverse_geocoding_enabled? is photon_enabled? ||
+      # geoapify_enabled? || nominatim_enabled? || locationiq_enabled?, and photon_enabled? is
+      # just PHOTON_API_HOST.present?. There is NO REVERSE_GEOCODING_ENABLED env in the app, so
+      # the old `REVERSE_GEOCODING_ENABLED: false` line was a silent no-op while PHOTON_API_HOST
+      # kept geocoding fully enabled (cause of the 2026-06-12 cache runaway and the 2026-06-14
+      # sidekiq OOM crash-loop). To truly disable, the provider host must be ABSENT -- so do not
+      # add PHOTON_API_HOST / GEOAPIFY_API_KEY / NOMINATIM_API_HOST / LOCATIONIQ_API_KEY here.
+      # To re-enable, restore PHOTON_API_HOST (+ PHOTON_API_USE_HTTPS) AND raise dawarich_redis
+      # maxmemory/mem_limit to fit the nightly per-point job burst.
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_ISSUER: https://tsidp.${TS_DOMAIN}
@@ -160,9 +172,9 @@ services:
       RAILS_LOG_TO_STDOUT: "true"
       SELF_HOSTED: true
       STORE_GEODATA: true
-      PHOTON_API_HOST: photon.komoot.io
-      PHOTON_API_USE_HTTPS: true
-      REVERSE_GEOCODING_ENABLED: false
+      # Reverse geocoding intentionally OFF -- no provider host set. This is the service that
+      # actually runs the nightly cron + ReverseGeocodingJobs, so the host MUST be absent here
+      # too. See the full explanation on dawarich_app's env block above.
       OTP_ENCRYPTION_PRIMARY_KEY: ${OTP_ENCRYPTION_PRIMARY_KEY}
       OTP_ENCRYPTION_DETERMINISTIC_KEY: ${OTP_ENCRYPTION_DETERMINISTIC_KEY}
       OTP_ENCRYPTION_KEY_DERIVATION_SALT: ${OTP_ENCRYPTION_KEY_DERIVATION_SALT}
