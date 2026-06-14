@@ -459,6 +459,38 @@ services:
         condition: service_healthy
       sabnzbd:
         condition: service_healthy
+  recyclarr:
+    # Syncs TRaSH Guides custom formats + quality-profile scores into Sonarr
+    # and Radarr (keeps Dolby Vision Profile-5 floored -- see
+    # docs/neuromancer-dolby-vision-fix.md). Config lives on disk at
+    # container-mounts/recon/recyclarr (configs/*.yml + secrets.yml) mounted at
+    # /config; the *arr API keys come from /config/secrets.yml via !secret,
+    # kept out of the version-safe config files. CRON_SCHEDULE runs a daily sync.
+    # https://recyclarr.dev/wiki/installation/docker/
+    image: ghcr.io/recyclarr/recyclarr
+    container_name: recon-recyclarr
+    volumes:
+      - ${VOL_RECON_RECYCLARR_CONFIG:-~/container-data}/container-mounts/recon/recyclarr:/config
+    environment:
+      TZ: America/Chicago
+      CRON_SCHEDULE: "@daily"
+    # The recyclarr image ships no HEALTHCHECK of its own; confirm the binary runs.
+    healthcheck:
+      test: "recyclarr --version || exit 1"
+      start_period: 120s
+      start_interval: 5s
+      interval: 5m
+    restart: on-failure
+    # Shares gluetun's netns to reach Sonarr/Radarr on localhost, matching the
+    # base_url values in configs/*.yml (http://localhost:8989 / :7878).
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+      sonarr:
+        condition: service_healthy
+      radarr:
+        condition: service_healthy
   sabnzbd:
     image: lscr.io/linuxserver/sabnzbd
     container_name: recon-sabnzbd
