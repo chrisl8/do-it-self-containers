@@ -21,8 +21,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
     healthcheck:
       test: 'runuser -s /usr/local/bin/php - www-data /var/www/html/occ status 2>/dev/null | grep -e "installed: true" -e "maintenance: false" -e "needsDbUpgrade: false" | wc -l | [ "`cat`" = "3" ]'
       start_period: 300s
@@ -88,6 +86,14 @@ services:
     # php occ fulltextsearch:index --background
     #
     # It should take care of indexing new/changed documents on its own.
+    #
+    # OPT-IN: gated behind the "fulltextsearch" compose profile, so it does NOT start by
+    # default. This JVM twice took down the 31 GiB host (2026-06-12 livelock, 2026-06-14 OOM),
+    # and full-text search is a feature most installs never use. Nextcloud runs fine without it
+    # (filename search still works). To use full-text search: start the stack with
+    # COMPOSE_PROFILES=fulltextsearch and re-enable the fulltextsearch* apps via occ
+    # (occ app:enable fulltextsearch fulltextsearch_elasticsearch files_fulltextsearch).
+    profiles: ["fulltextsearch"]
     container_name: nextcloud-elasticsearch
     # The github repo for the plugin says it only works with version 8, so this may be unwise:
     image: elasticsearch:9.1.0
