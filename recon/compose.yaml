@@ -351,6 +351,12 @@ services:
     volumes:
       - ${VOL_RECON_LAZYLIBRARIAN_CONFIG:-~/container-data}/container-mounts/recon/lazylibrarian/config:/config
       - ${VOL_RECON_DATA_MEDIA:-~/container-data}/container-mounts/recon/data/media:/media/arr
+      # Ships 20-seed-storage-paths.sh via config-defaults. LSIO scans
+      # /custom-cont-init.d at the container root, NOT under /config. On a
+      # fresh install this points ebook_dir/download_dir at the persistent
+      # /media/arr mount so a rebuilt container does not write books into the
+      # ephemeral overlay (where they are lost on every recreate).
+      - ./lazylibrarian-cont-init.d:/custom-cont-init.d:ro
     labels:
       - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=LazyLibrarian
