@@ -7,7 +7,7 @@ services:
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - ./config:/config
+      - ${VOL_THELOUNGE_CONFIG:-~/container-data}/container-mounts/the-lounge/config:/config
     labels:
       # For homepage
       - homepage.group=${HOMEPAGE_GROUP}
