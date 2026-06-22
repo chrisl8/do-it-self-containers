@@ -22,6 +22,11 @@ services:
       - WIREGUARD_PUBLIC_KEY=${WIREGUARD_PUBLIC_KEY}
       - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
       - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+      # Let this VPN namespace reach Tailscale peers (100.64.0.0/10) directly so
+      # Prowlarr can push indexer syncs to the off-VPN lazylibrarian node. Only
+      # the tailnet range bypasses the tunnel; the kill switch still governs all
+      # other outbound traffic.
+      - FIREWALL_OUTBOUND_SUBNETS=100.64.0.0/10
     labels:
       - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=Gluetun VPN
@@ -363,7 +368,7 @@ services:
       - homepage.weight=80
       - homepage.icon=/dashboard-icons/png/lazylibrarian.png
       - homepage.showstats=true
-      - homepage.href=http://recon.${TS_DOMAIN}:5299/
+      - homepage.href=http://lazylibrarian.${TS_DOMAIN}:5299/
       - homepage.description=LazyLibrarian is a SickBeard, CouchPotato, Headphones-like application for ebooks, audiobooks and magazines
     restart: on-failure
     healthcheck:
@@ -373,14 +378,46 @@ services:
       interval: 5m
       timeout: 5s
       retries: 3
+    # Off-VPN: LazyLibrarian rides ts-lazylibrarian's namespace (residential
+    # egress for LibGen), and reaches the rest of the stack over the tailnet
+    # (Prowlarr/SAB/qBit at recon.${TS_DOMAIN}:<port>, set in config). It only
+    # needs its own ts node up; the other services are reached at runtime.
     depends_on:
-      gluetun:
+      ts-lazylibrarian:
         condition: service_healthy
-      prowlarr:
-        condition: service_healthy
-      qbittorrent:
-        condition: service_healthy
-    network_mode: "service:gluetun"
+    network_mode: "service:ts-lazylibrarian"
+  # Non-VPN Tailscale sidecar dedicated to LazyLibrarian. Unlike recon-ts (which
+  # rides gluetun's VPN namespace), this node is on the normal bridge network so
+  # its egress is the host's residential IP -- shadow-library sources (LibGen)
+  # rate-limit/block the datacenter VPN IP but not residential. LazyLibrarian
+  # joins THIS namespace (network_mode: service:ts-lazylibrarian) and reaches the
+  # rest of the recon stack over the tailnet at recon.${TS_DOMAIN}:<port>.
+  ts-lazylibrarian:
+    container_name: recon-ts-lazylibrarian
+    image: tailscale/tailscale
+    environment:
+      - TZ=America/Chicago
+      - UMASK=022
+      - TS_HOSTNAME=lazylibrarian
+      - TS_EXTRA_ARGS=--advertise-tags=tag:container
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_ENABLE_HEALTH_CHECK=true
+      - TS_LOCAL_ADDR_PORT=127.0.0.1:9002
+      - TS_AUTHKEY=${TS_AUTHKEY}
+    volumes:
+      - ${TS_STATE_HOST_DIR_LAZYLIBRARIAN}:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9002/healthz"]
+      start_period: 300s
+      start_interval: 5s
+      interval: 5m
+      timeout: 5s
+      retries: 3
   decluttarr:
     # https://github.com/ManiMatter/decluttarr?tab=readme-ov-file#running-in-docker
     image: ghcr.io/manimatter/decluttarr
