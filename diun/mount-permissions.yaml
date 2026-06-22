@@ -1,0 +1,9 @@
+# DIUN runs as root and, on first run, auto-creates its /script bind-mount
+# source dir as root:root. all-containers.sh runs as the host user (uid 1000)
+# and writes pendingContainerUpdates.txt there during --get-updates; a
+# root-owned dir made every container's update bookkeeping fail. Pin the dir
+# (and its contents) to the host user so the script can always write it.
+mounts:
+  "${VOL_DIUN_SCRIPT:-~/container-data}/container-mounts/diun/script":
+    owner: "1000:1000"
+    recursive: true
