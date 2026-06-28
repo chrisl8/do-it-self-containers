@@ -1,27 +1,32 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
-# Disable LazyLibrarian's web image-search fallback for covers and author photos.
+# Stop LazyLibrarian from caching junk (non-cover) images for books & authors.
 #
-# When LazyLibrarian can't find a real cover/author image from a proper source
-# (GoodReads, OpenLibrary, Google Books ISBN, Hardcover, LibraryThing), it falls
-# back to running a Baidu/Bing/Google *image search* via the bundled `icrawler`
-# library and blindly caches the first result. In practice that returns ads,
-# watermarked stock art, AI-generated junk, and random people -- not book covers
-# or author portraits. There is NO config.ini / web-UI toggle for this in the
-# DobyTang fork; it is gated only on Pillow being importable, which it always is
-# in this image (calibre mod). So we neuter it at the source.
+# Two distinct upstream bugs produce bogus "covers"/author photos:
 #
-# We disable the two crawl entry points in images.py by short-circuiting their
-# guard conditions to False:
-#   get_book_cover():   `if PIL and safeparams:`  -> never runs Baidu/Bing/Google
-#   get_author_image(): `if PIL and author:`      -> never runs Google/Bing
-# Every legitimate cover source runs *before* these blocks, so real covers are
-# unaffected; only the junk fallback is removed. Authors/books with no real
-# image just show the nophoto/nocover placeholder.
+# 1. WEB IMAGE-SEARCH FALLBACK. When LazyLibrarian can't find a real image from
+#    a proper source (GoodReads, OpenLibrary, Google Books ISBN, Hardcover,
+#    LibraryThing), it runs a Baidu/Bing/Google *image search* via the bundled
+#    `icrawler` library and blindly caches the first hit -- ads, watermarked
+#    stock art, AI-generated junk, random people, lecture slides. There is NO
+#    config.ini / web-UI toggle in the DobyTang fork; it is gated only on Pillow
+#    being importable, which it always is here (calibre mod). We disable the two
+#    crawl entry points in images.py by short-circuiting their guards to False:
+#      get_book_cover():   `if PIL and safeparams:`  -> never runs the crawlers
+#      get_author_image(): `if PIL and author:`      -> never runs the crawlers
+#    Every legitimate source runs *before* these blocks, so real covers are
+#    unaffected; items with no real image just show the nophoto/nocover image.
 #
-# The sed is idempotent: once a line reads `if False and PIL ...` the match no
-# longer fires. This script must never abort container startup, so it avoids
-# `set -e` and always exits 0.
+# 2. GOODREADS GENERIC-LOGO og:image. The GoodReads cover scrape falls back to
+#    the page's og:image when there is no <img id="coverImage">. For a book with
+#    no cover that og:image is GoodReads' generic social-share logo
+#    (https://s.gr-assets.com/assets/facebook/goodreads_wide-*.png), cached as
+#    the "cover". The existing URL filter only rejects 'nocover'/'nophoto', so we
+#    extend it to also reject the 'assets/facebook' generic-logo path (harmless
+#    for the OpenLibrary filter that shares the same line shape).
+#
+# All edits are idempotent and this script must never abort container startup,
+# so it avoids `set -e` and always exits 0.
 
 TARGET=/app/lazylibrarian/lazylibrarian/images.py
 
@@ -44,5 +49,18 @@ patch_guard() {
 
 patch_guard "PIL and safeparams:"
 patch_guard "PIL and author:"
+
+# Reject the GoodReads generic-logo og:image. Append the extra condition to any
+# cover-URL filter line that doesn't already have it.
+if grep -qE "'nophoto' not in img:" "$TARGET"; then
+    if grep -qE "'nophoto' not in img and 'assets/facebook' not in img:" "$TARGET"; then
+        : # already patched
+    else
+        sed -i -E "s/'nophoto' not in img:/'nophoto' not in img and 'assets\/facebook' not in img:/g" "$TARGET"
+        echo "[30-disable-image-search] added GoodReads generic-logo (assets/facebook) cover filter"
+    fi
+else
+    echo "[30-disable-image-search] WARNING: cover-URL filter line not found; GoodReads logo filter not applied"
+fi
 
 exit 0
