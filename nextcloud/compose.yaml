@@ -8,6 +8,9 @@ services:
     container_name: nextcloud
     volumes:
       - ${VOL_NEXTCLOUD_HTML:-~/container-data}/container-mounts/nextcloud/html:/var/www/html
+      # HSTS header — TLS is terminated by the ts sidecar (which can't add headers),
+      # so Nextcloud's Apache sets Strict-Transport-Security itself. See hsts.conf.
+      - ./hsts.conf:/etc/apache2/conf-enabled/hsts.conf:ro
     environment:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=nextcloud
