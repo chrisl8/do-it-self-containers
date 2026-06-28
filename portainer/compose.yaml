@@ -18,10 +18,12 @@ services:
       - homepage.weight=40
       - homepage.icon=/dashboard-icons/svg/portainer.svg
       - homepage.href=https://portainer.${TS_DOMAIN}
-    # This is the derpiest healtcheck I've ever set up, but it works and keeps the pattern of all of my containers having health checks
-    # https://github.com/portainer/portainer/issues/1364#issuecomment-955588034
+    # Derpy-but-works healthcheck. Portainer's image is distroless (no shell, no wget),
+    # so we just exec the portainer binary itself, which exits 0 quickly on --version.
+    # The old check ran the bundled /docker CLI, but portainer-ce dropped that binary
+    # in the distroless images (>=2.39), so it can never pass anymore.
     healthcheck:
-      test: ["CMD", "/docker", "container", "top", "portainer"]
+      test: ["CMD", "/portainer", "--version"]
       start_period: 300s
       start_interval: 5s
       interval: 5m
