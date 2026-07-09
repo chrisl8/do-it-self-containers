@@ -1,8 +1,8 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
-# Stop LazyLibrarian from caching junk (non-cover) images for books & authors.
+# Stop LazyLibrarian from caching junk (non-cover) images for BOOK COVERS.
 #
-# Two distinct upstream bugs produce bogus "covers"/author photos:
+# Two distinct upstream bugs produce bogus book "covers":
 #
 # 1. WEB IMAGE-SEARCH FALLBACK. When LazyLibrarian can't find a real image from
 #    a proper source (GoodReads, OpenLibrary, Google Books ISBN, Hardcover,
@@ -10,12 +10,11 @@
 #    `icrawler` library and blindly caches the first hit -- ads, watermarked
 #    stock art, AI-generated junk, random people, lecture slides. There is NO
 #    config.ini / web-UI toggle in the DobyTang fork; it is gated only on Pillow
-#    being importable, which it always is here (calibre mod). We disable the two
-#    crawl entry points in images.py by short-circuiting their guards to False:
-#      get_book_cover():   `if PIL and safeparams:`  -> never runs the crawlers
-#      get_author_image(): `if PIL and author:`      -> never runs the crawlers
-#    Every legitimate source runs *before* these blocks, so real covers are
-#    unaffected; items with no real image just show the nophoto/nocover image.
+#    being importable, which it always is here (calibre mod). We disable the
+#    BOOK-COVER crawl entry point in images.py by short-circuiting its guard:
+#      get_book_cover(): `if PIL and safeparams:` -> never runs the crawlers
+#    Every legitimate cover source runs *before* this block, so real covers are
+#    unaffected; a book with no real cover just shows the nocover image.
 #
 # 2. GOODREADS GENERIC-LOGO og:image. The GoodReads cover scrape falls back to
 #    the page's og:image when there is no <img id="coverImage">. For a book with
@@ -25,6 +24,15 @@
 #    extend it to also reject the 'assets/facebook' generic-logo path (harmless
 #    for the OpenLibrary filter that shares the same line shape).
 #
+# AUTHOR IMAGES are deliberately LEFT ENABLED. The proper author-image source
+# (GoodReads author XML API, author/show/{id}.xml) is dead -- it returns HTTP 401
+# "Invalid API key." since GoodReads retired the API in 2020 -- so the image
+# crawl in get_author_image() (`if PIL and author:`) is the ONLY way to get any
+# author photo at all. For the small, mostly-famous author list here it returns
+# correct photos often enough to be worth keeping; the occasional junk hit is
+# curated out by hand. This script therefore ensures that guard stays UNpatched,
+# self-healing it if a previous version of this script disabled it.
+#
 # All edits are idempotent and this script must never abort container startup,
 # so it avoids `set -e` and always exits 0.
 
@@ -33,7 +41,7 @@ TARGET=/app/lazylibrarian/lazylibrarian/images.py
 # Only act inside the LazyLibrarian container.
 [[ -f "$TARGET" ]] || exit 0
 
-patch_guard() {
+disable_guard() {
     # $1 = the exact guard expression to disable, e.g. "PIL and safeparams:"
     local guard="$1"
     if grep -qE "^[[:space:]]*if ${guard}\$" "$TARGET"; then
@@ -47,18 +55,25 @@ patch_guard() {
     fi
 }
 
-patch_guard "PIL and safeparams:"
-patch_guard "PIL and author:"
+enable_guard() {
+    # $1 = the guard expression to (re-)enable, reverting a prior disable.
+    local guard="$1"
+    if grep -qE "if False and ${guard}  # LL-img-search-disabled" "$TARGET"; then
+        sed -i -E "s/if False and ${guard}  # LL-img-search-disabled/if ${guard}/" "$TARGET"
+        echo "[30-disable-image-search] re-enabled crawl guard: if ${guard}"
+    fi
+}
+
+disable_guard "PIL and safeparams:"   # book covers: OFF
+enable_guard  "PIL and author:"       # author photos: ON (only source; dead GR API)
 
 # Reject the GoodReads generic-logo og:image. Append the extra condition to any
 # cover-URL filter line that doesn't already have it.
-if grep -qE "'nophoto' not in img:" "$TARGET"; then
-    if grep -qE "'nophoto' not in img and 'assets/facebook' not in img:" "$TARGET"; then
-        : # already patched
-    else
-        sed -i -E "s/'nophoto' not in img:/'nophoto' not in img and 'assets\/facebook' not in img:/g" "$TARGET"
-        echo "[30-disable-image-search] added GoodReads generic-logo (assets/facebook) cover filter"
-    fi
+if grep -qE "'nophoto' not in img and 'assets/facebook' not in img:" "$TARGET"; then
+    : # already patched
+elif grep -qE "'nophoto' not in img:" "$TARGET"; then
+    sed -i -E "s/'nophoto' not in img:/'nophoto' not in img and 'assets\/facebook' not in img:/g" "$TARGET"
+    echo "[30-disable-image-search] added GoodReads generic-logo (assets/facebook) cover filter"
 else
     echo "[30-disable-image-search] WARNING: cover-URL filter line not found; GoodReads logo filter not applied"
 fi
