@@ -24,14 +24,16 @@
 #    extend it to also reject the 'assets/facebook' generic-logo path (harmless
 #    for the OpenLibrary filter that shares the same line shape).
 #
-# AUTHOR IMAGES are deliberately LEFT ENABLED. The proper author-image source
+# AUTHOR IMAGES: the crawl is ALSO disabled. The proper author-image source
 # (GoodReads author XML API, author/show/{id}.xml) is dead -- it returns HTTP 401
-# "Invalid API key." since GoodReads retired the API in 2020 -- so the image
-# crawl in get_author_image() (`if PIL and author:`) is the ONLY way to get any
-# author photo at all. For the small, mostly-famous author list here it returns
-# correct photos often enough to be worth keeping; the occasional junk hit is
-# curated out by hand. This script therefore ensures that guard stays UNpatched,
-# self-healing it if a previous version of this script disabled it.
+# "Invalid API key." since GoodReads retired the API in 2020 -- so LazyLibrarian
+# would otherwise fall back to the same junk image crawl for every author (it
+# returns book covers, ads, and random people as "portraits"). Instead, author
+# portraits are sourced out-of-band from Wikidata/OpenLibrary and written
+# straight into the DB by scripts/lazylibrarian-author-images.py (run on demand).
+# With the crawl off, a new author simply shows the nophoto placeholder until
+# that script fetches a real photo -- clean by default, no junk, no curation.
+# Existing cached author photos keep serving (cache-hit precedes this guard).
 #
 # All edits are idempotent and this script must never abort container startup,
 # so it avoids `set -e` and always exits 0.
@@ -55,17 +57,8 @@ disable_guard() {
     fi
 }
 
-enable_guard() {
-    # $1 = the guard expression to (re-)enable, reverting a prior disable.
-    local guard="$1"
-    if grep -qE "if False and ${guard}  # LL-img-search-disabled" "$TARGET"; then
-        sed -i -E "s/if False and ${guard}  # LL-img-search-disabled/if ${guard}/" "$TARGET"
-        echo "[30-disable-image-search] re-enabled crawl guard: if ${guard}"
-    fi
-}
-
-disable_guard "PIL and safeparams:"   # book covers: OFF
-enable_guard  "PIL and author:"       # author photos: ON (only source; dead GR API)
+disable_guard "PIL and safeparams:"   # book covers: OFF (junk crawl)
+disable_guard "PIL and author:"       # author photos: OFF (junk crawl; use the script)
 
 # Reject the GoodReads generic-logo og:image. Append the extra condition to any
 # cover-URL filter line that doesn't already have it.
