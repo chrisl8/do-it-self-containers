@@ -21,6 +21,7 @@ services:
       - homepage-net
     environment:
       HOMEPAGE_ALLOWED_HOSTS: console.${TS_DOMAIN}
+      HOMEPAGE_VAR_FASTMAIL_TOKEN: ${HOMEPAGE_VAR_FASTMAIL_TOKEN}
     # healthcheck: is built into this app, no need to add one.
     restart: on-failure
   ts:
