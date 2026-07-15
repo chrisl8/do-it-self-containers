@@ -1,13 +1,31 @@
 # yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
 ################################################################################
-## Sonarr — single instance managing TWO TRaSH quality profiles:
-##   - WEB-2160p           (standard TV; trash d1498e7d...)
-##   - [Anime] Remux-1080p (anime;       trash 20e0fc95...)
+## Sonarr — single instance managing THREE quality profiles:
+##   - WEB-2160p                (standard TV; TRaSH d1498e7d...)
+##   - [Anime] Remux-1080p      (anime;       TRaSH 20e0fc95...)
+##   - Best Available (SD-1080p) (LOCAL, no trash_id -- see below)
 ##
 ## Recyclarr forbids two config instances pointing at the same Sonarr URL
-## ("Split Instances"), so both profiles live here. quality_definition is
+## ("Split Instances"), so all profiles live here. quality_definition is
 ## `series` (a single instance allows only one); anime at 1080p fits within the
 ## series size caps, so this is safe for both.
+##
+## WHY A LOCAL PROFILE EXISTS HERE (the one deviation from "just use TRaSH"):
+## TRaSH ships no SD profile. Every English Sonarr profile they publish is
+## WEB-era -- WEB-1080p is WEB 1080p only, WEB-2160p is WEB 2160p only, and
+## even WEB-2160p (Combined) is just those two stacked. The ONLY stock profile
+## that reaches down to DVD is [Anime] Remux-1080p, which is unusable for live
+## action because it sets min_format_score: 100 (a DVD release scoring 0 gets
+## rejected outright) and drags in the anime tier scoring.
+##
+## So pre-HD shows had nowhere to go. Star Trek: Voyager sat at 0/173 files
+## while an interactive search returned 497 releases (320 DVD, 0 WEBDL-2160p)
+## and Sonarr correctly rejected every one: "DVD is not wanted in profile".
+## Voyager was finished on SD NTSC video and never remastered, so no 4K master
+## can ever exist. Same story for classic Doctor Who, Quatermass, M*A*S*H.
+##
+## This profile is the one to assign when a show is stuck. See
+## docs/sonarr-stuck-series.md.
 ################################################################################
 
 sonarr:
@@ -25,6 +43,47 @@ sonarr:
       - trash_id: 20e0fc959f1f1704bed501f23bdae76f  # [Anime] Remux-1080p
         reset_unmatched_scores:
           enabled: true
+      # LOCAL profile -- no trash_id, because TRaSH has nothing to inherit from
+      # (see header). Assign a series to this by hand when WEB-2160p can never
+      # match it: DVD-era shows, or anything with a 1080p release but no 4K.
+      # Capped at 1080p on purpose -- a show needing this profile has no 4K by
+      # definition, and the cap makes DV Profile 5 (a 2160p format) structurally
+      # impossible here, so the decode problem cannot come back through it.
+      - name: Best Available (SD-1080p)
+        # Wipes every CF not scored below back to 0, so the WEB-2160p x265/10bit
+        # penalties and the anime tiers cannot leak in. x265 and 10bit stay at 0
+        # deliberately: both are fine and common for DVD-era encodes.
+        reset_unmatched_scores:
+          enabled: true
+        min_format_score: 0
+        quality_sort: top
+        upgrade:
+          allowed: true
+          # Stop at WEB 1080p rather than Bluray-1080p -- these shows realistically
+          # top out at DVD anyway, and the lower cutoff means fewer upgrade grabs.
+          until_quality: WEB 1080p
+          until_score: 10000
+        # Ordered best -> worst (quality_sort: top).
+        qualities:
+          - name: Bluray-1080p
+          - name: WEB 1080p
+            qualities:
+              - WEBDL-1080p
+              - WEBRip-1080p
+          - name: HDTV-1080p
+          - name: Bluray-720p
+          - name: WEB 720p
+            qualities:
+              - WEBDL-720p
+              - WEBRip-720p
+          - name: HDTV-720p
+          - name: Bluray-480p
+          - name: WEB 480p
+            qualities:
+              - WEBDL-480p
+              - WEBRip-480p
+          - name: DVD
+          - name: SDTV
 
     # Local overrides on top of the TRaSH profiles:
     custom_formats:
@@ -52,6 +111,33 @@ sonarr:
         assign_scores_to:
           - name: '[Anime] Remux-1080p'
             score: 100
+      # --- Best Available (SD-1080p) only ---------------------------------
+      # THE load-bearing score on this profile. Every 720p/1080p "release" of a
+      # DVD-era show is an AI upscale of the SD master. Without this floor,
+      # Voyager grabs DVD and then immediately "upgrades" to one of the 40
+      # HDTV-720p upscales the indexers carry -- churn AND worse picture. With
+      # it, Voyager settles on DVD and stays put. Native-1080p shows assigned to
+      # this profile are unaffected: they aren't upscales, so the CF misses them.
+      - trash_ids:
+          - 23297a736ca77c0fc8e70f8edd7ee56c  # Upscaled
+        assign_scores_to:
+          - name: Best Available (SD-1080p)
+            score: -10000
+      # Standard junk floors. min_format_score is 0, so -10000 = hard reject.
+      - trash_ids:
+          - 9c11cd3f07101cdba90a2d81cf0e56b4  # LQ
+          - e2315f990da2e2cbfc9fa5b7a6fcfe48  # LQ (Release Title)
+          - 85c61753df5da1fb2aab6f2a47426b09  # BR-DISK
+          - 32b367365729d530ca1c124a0b180c64  # Bad Dual Groups
+        assign_scores_to:
+          - name: Best Available (SD-1080p)
+            score: -10000
+      # Belt-and-braces only -- DV P5 cannot reach a 1080p-capped profile.
+      - trash_ids:
+          - 9b27ab6498ec0f31a3353992e19434ca  # DV (w/o HDR fallback)
+        assign_scores_to:
+          - name: Best Available (SD-1080p)
+            score: -10000
 
     # CF groups for the standard WEB-2160p profile. The anime profile pulls in
     # its own anime-tier CFs automatically from its quality-profile score set.
