@@ -995,6 +995,12 @@ containers:
     homepage_group: Media
     tags: []
     uses_tailscale: true
+    # lazylibrarian runs its own Tailscale node off the VPN; compose.yaml binds
+    # it via ${TS_STATE_HOST_DIR_LAZYLIBRARIAN}. Block syntax is required --
+    # generate-env.js parses this file's registry render with a minimal parser
+    # that reads flow `[a]` as a string, which would silently empty the bind.
+    tailscale_extra_nodes:
+      - lazylibrarian
     start_order: z110
     required_accounts:
       - name: WireGuard VPN provider
@@ -1234,6 +1240,11 @@ containers:
     homepage_group: Communication
     tags: []
     uses_tailscale: true
+    volumes:
+      config:
+        var: VOL_THELOUNGE_CONFIG
+        host_subpath: container-mounts/the-lounge/config
+        container_path: /config
     default_disabled: true
   trilium:
     description: Hierarchical note-taking application
