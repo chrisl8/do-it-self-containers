@@ -7,7 +7,7 @@ services:
     # Pinned (not floating like the rest of the stack): runs irreversible DB
     # migrations on startup and is the secret-store every other container
     # depends on; upgrade deliberately (snapshot the DB first, read the notes).
-    image: infisical/infisical:v0.132.2-postgres
+    image: infisical/infisical:v0.162.7
     depends_on:
       infisical-db:
         condition: service_healthy
