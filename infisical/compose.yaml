@@ -45,6 +45,17 @@ services:
   infisical-db:
     container_name: infisical-db
     image: postgres:14-alpine
+    # Postgres caches an fd per relation file segment and deliberately fills
+    # that cache up to max_files_per_process (default 1000), parking backends
+    # at ~990 open files. Against Docker's default 1024 soft limit that reads
+    # as 96.7% and trips netdata's apps_group_file_descriptors_utilization
+    # alarm every hour when Infisical's hourly job sweeps its tables. Postgres
+    # still self-caps at 1000, so this changes no behavior -- it only restores
+    # a denominator where the percentage means something.
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 524288
     environment:
       - POSTGRES_DB=infisical
       - POSTGRES_USER=infisical
