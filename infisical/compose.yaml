@@ -39,8 +39,12 @@ services:
       # DIUN: the pinned tag's digest never moves, so default digest-watching
       # never fires. watch_repo enumerates repo tags and alerts on any new
       # release so we know when to do a deliberate, manual upgrade.
+      # The tag is plain vX.Y.Z -- upstream dropped the -postgres suffix
+      # between v0.140 and v0.150 (plain tags ARE the Postgres build), so a
+      # pattern requiring that suffix matches nothing and silently never
+      # alerts. Anchored to exclude the commit-SHA tags and `latest`.
       - diun.watch_repo=true
-      - diun.include_tags=^v[0-9]+\.[0-9]+\.[0-9]+-postgres$
+      - diun.include_tags=^v[0-9]+\.[0-9]+\.[0-9]+$
     restart: on-failure
   infisical-db:
     container_name: infisical-db
