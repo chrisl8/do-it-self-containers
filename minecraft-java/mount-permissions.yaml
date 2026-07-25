@@ -1,0 +1,9 @@
+# Docker creates missing bind-mount dirs as root:root. mc-backup runs as 1000:1000 and must
+# write tarballs into the backups mount (otherwise every backup fails with "Permission denied"
+# and the no-healthcheck... now-healthchecked sidecar flags the whole project unhealthy).
+mounts:
+  "${VOL_MINECRAFT_JAVA_DATA:-~/container-data}/container-mounts/minecraft-java/data":
+    owner: "1000:1000"
+  "${VOL_MINECRAFT_JAVA_BACKUPS:-~/container-data}/container-mounts/minecraft-java/backups":
+    owner: "1000:1000"
+    recursive: true
