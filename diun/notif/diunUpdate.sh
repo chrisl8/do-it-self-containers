@@ -90,6 +90,12 @@ case "$IMAGE_NAME" in
     beszel-agent)
         OUTPUT_IMAGE_NAME="beszel"
         ;;
+    # itzg/minecraft-server + itzg/mc-backup both live in the minecraft-java stack.
+    # (The bedrock "minecraft" folder builds from a git clone, so it has no watched
+    # image and never shows up here.)
+    minecraft-server*|mc-backup*)
+        OUTPUT_IMAGE_NAME="minecraft-java"
+        ;;
     speedtest-tracker)
         OUTPUT_IMAGE_NAME="speedtest"
         ;;
