@@ -66,7 +66,23 @@ services:
       USERMAP_GID: 1000
     networks:
       - paperless-net
-    # Note that papaerless (webserver) has a health check built into the Dockerfile, so no need to add it here.
+    # The image ships its own healthcheck, but with no start_period: interval 30s x 5 retries means
+    # the container is declared unhealthy 150s after start. Version upgrades that carry a data
+    # migration blow straight through that -- the 2026-07-26 upgrade spent ~3.5 min recomputing
+    # SHA-256 for 18,892 documents (migration documents.0016_sha256_checksums) plus a search index
+    # check, ~8.5 min total before gunicorn bound port 8000. `docker compose up --wait` aborts the
+    # instant a container reports unhealthy rather than running out its --wait-timeout, so the
+    # upgrade was reported as failed while it was in fact working, and the ts sidecar (which waits
+    # on webserver being healthy) was left in Created. Overriding with a generous start_period keeps
+    # failures from counting toward retries while migrations run, so all-containers.sh's
+    # HEALTH_WAIT_TIMEOUT is the real ceiling. Grow this if the library grows a lot.
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "-S", "-L", "--max-time", "5", "http://localhost:8000"]
+      start_period: 900s
+      start_interval: 10s
+      interval: 5m
+      timeout: 10s
+      retries: 3
     labels:
       # For homepage
       - homepage.group=${HOMEPAGE_GROUP}
