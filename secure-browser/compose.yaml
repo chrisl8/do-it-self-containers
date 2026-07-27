@@ -9,6 +9,12 @@ services:
       - TZ=Etc/UTC # No need to leak my timezone
       - SUBFOLDER=/ #optional
       - CHROME_CLI=--disable-gpu
+      # wlroots cannot allocate GBM buffers on the passed-through NVIDIA render
+      # node, so it never enables an output and labwc has nowhere to draw -- the
+      # desktop streams as a blank grey screen. Software-render the compositor;
+      # the GPU stays available to NVENC for the video encode. See the same
+      # setting on obsidian.
+      - WLR_RENDERER=pixman
       - TITLE=Browser #optional
     shm_size: "1gb" #optional
     network_mode: service:gluetun-browser

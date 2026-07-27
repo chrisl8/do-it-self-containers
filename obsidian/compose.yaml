@@ -8,6 +8,11 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/Chicago
+      # wlroots cannot allocate GBM buffers on the passed-through NVIDIA render
+      # node, so it fails to enable an output at all and labwc has nowhere to
+      # draw -- every app streams as a blank grey desktop. Software-render the
+      # compositor; the GPU stays available to NVENC for the video encode.
+      - WLR_RENDERER=pixman
     volumes:
       - ${VOL_OBSIDIAN_CONFIG:-~/container-data}/container-mounts/obsidian/config:/config
     shm_size: "1gb"
