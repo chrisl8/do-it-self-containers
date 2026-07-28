@@ -137,6 +137,13 @@ services:
     image: tailscale/tailscale
     environment:
       - TS_HOSTNAME=nextcloud
+      # Kernel-mode networking. The image defaults to TS_USERSPACE=true, whose gVisor
+      # netstack drops ~11% of inbound UDP and burns far more CPU per byte — this is
+      # the largest sync/upload service on the tailnet, so that cost is paid often.
+      # trusted_proxies is the 255.255.255.255 sentinel and trusted_domains are
+      # hostnames, so neither is affected by the source-IP change. See
+      # docs/TAILSCALE_KERNEL_MODE_ROLLOUT.md in the containers repo.
+      - TS_USERSPACE=false
       - TS_EXTRA_ARGS=--advertise-tags=tag:container
       - TS_SERVE_CONFIG=/config/tailscale-config.json
       - TS_STATE_DIR=/var/lib/tailscale
