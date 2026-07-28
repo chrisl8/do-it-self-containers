@@ -104,6 +104,14 @@ services:
     image: tailscale/tailscale
     environment:
       - TS_HOSTNAME=minecraft-java
+      # Use the kernel TUN device instead of the image's default userspace
+      # networking. In userspace mode tailscaled reassembles every tailnet
+      # packet in a gVisor netstack and re-injects it over loopback, which
+      # measured ~11% inbound UDP loss on this host. The Java game protocol is
+      # TCP and masks that with retransmits, but Simple Voice Chat (UDP 24454)
+      # does not. Requires /dev/net/tun plus net_admin, both already granted
+      # below. See docs/TAILSCALE_KERNEL_MODE_ROLLOUT.md
+      - TS_USERSPACE=false
       - TS_EXTRA_ARGS=--advertise-tags=tag:container
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_ENABLE_HEALTH_CHECK=true
