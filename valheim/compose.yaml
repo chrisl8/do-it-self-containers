@@ -47,6 +47,14 @@ services:
     image: tailscale/tailscale
     environment:
       - TS_HOSTNAME=valheim
+      # Use the kernel TUN device instead of the image's default userspace
+      # networking. In userspace mode tailscaled reassembles every tailnet
+      # packet in a gVisor netstack and re-injects it over loopback, which
+      # dropped ~11% of inbound UDP and made Valheim's ZRpc time out after
+      # 30s for anyone connecting over Tailscale. LAN players were unaffected
+      # because they hit the published port directly. Requires /dev/net/tun
+      # plus net_admin, both already granted below.
+      - TS_USERSPACE=false
       - TS_EXTRA_ARGS=--advertise-tags=tag:container
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_ENABLE_HEALTH_CHECK=true
