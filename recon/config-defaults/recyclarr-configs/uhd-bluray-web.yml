@@ -1,9 +1,30 @@
 # yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
 ################################################################################
-## TRaSH Guides: UHD Bluray + WEB
+## Radarr — single instance managing TWO quality profiles:
+##   - UHD Bluray + WEB          (default for everything; TRaSH 64fb5f98...)
+##   - Best Available (SD-1080p) (LOCAL, no trash_id -- see below)
 ##
-## https://trash-guides.info/Radarr/radarr-setup-quality-profiles/#uhd-bluray-
-## web
+## Recyclarr forbids two config instances pointing at the same Radarr URL
+## ("Split Instances"), so both profiles live in this one instance block. That
+## is also why this file keeps its original name even though it now describes
+## more than the TRaSH profile: renaming it would leave the old copy behind in
+## the deployed ./recyclarr-configs directory, and two files both declaring
+## radarr@localhost:7878 is precisely the Split Instances error.
+##
+## WHY A LOCAL PROFILE EXISTS HERE:
+## `UHD Bluray + WEB` allows only WEBDL-2160p, WEBRip-2160p and Bluray-2160p, so
+## every movie was 4K-or-nothing -- and because it was the ONLY profile Radarr
+## had, there was nowhere to move a stuck movie TO. A film with no 4K release
+## simply sat at zero forever, silently: Radarr searches, finds plenty, rejects
+## every result on "<quality> is not wanted in profile", and writes nothing to
+## history. Three movies were found in exactly this state, two of them requests
+## 69 days old -- Quatermass (1967, Hammer film), The Quatermass Experiment
+## (2005, BBC live TV remake that will never have a 4K master) and The Woodsman
+## (2016, small indie).
+##
+## This is the profile to assign when UHD Bluray + WEB can never match. It
+## mirrors the Sonarr profile of the same name (see sonarr.yml) so the fix looks
+## identical on both sides. See docs/sonarr-stuck-series.md.
 ################################################################################
 
 radarr:
@@ -18,6 +39,60 @@ radarr:
       - trash_id: 64fb5f9858489bdac2af690e27c8f42f  # UHD Bluray + WEB
         reset_unmatched_scores:
           enabled: true
+      # LOCAL profile -- no trash_id, because TRaSH publishes no sub-4K Radarr
+      # profile to inherit from. Assign a movie to this by hand when UHD Bluray +
+      # WEB can never match it: pre-4K films, TV movies, and small releases that
+      # never got a UHD disc. Capped at 1080p on purpose -- a movie needing this
+      # profile has no 4K by definition, and the cap makes DV Profile 5 (a 2160p
+      # format) structurally impossible here, so the decode problem that this
+      # stack fights elsewhere cannot come back in through it.
+      - name: Best Available (SD-1080p)
+        # Wipes every CF not scored below back to 0, so the UHD profile's x265
+        # penalty and streaming-service boosts cannot leak in and skew a profile
+        # where none of them are meaningful.
+        reset_unmatched_scores:
+          enabled: true
+        min_format_score: 0
+        quality_sort: top
+        upgrade:
+          allowed: true
+          # Stop at WEB 1080p rather than Bluray-1080p. Bluray-1080p stays
+          # ALLOWED (it wins on quality rank when it shows up first) but is not
+          # chased as an upgrade, which avoids re-downloading a whole library of
+          # already-fine WEB releases at 2-3x the size.
+          until_quality: WEB 1080p
+          until_score: 10000
+        # Ordered best -> worst (quality_sort: top).
+        #
+        # Deliberately EXCLUDED, all of which Radarr offers and TRaSH keeps out:
+        #   Remux-1080p  -- 102+ MB/min, so a 2h film is 12 GB+. This is a
+        #                   fallback profile, not an archival one.
+        #   DVD-R, BR-DISK, Raw-HD -- disc images / raw transport streams;
+        #                   awkward-to-unplayable in Jellyfin.
+        #   CAM, TELESYNC, TELECINE, DVDSCR, WORKPRINT, REGIONAL -- cam-tier
+        #                   junk. A movie with no 4K release is not a reason to
+        #                   accept a camcorder rip.
+        qualities:
+          - name: Bluray-1080p
+          - name: WEB 1080p
+            qualities:
+              - WEBDL-1080p
+              - WEBRip-1080p
+          - name: HDTV-1080p
+          - name: Bluray-720p
+          - name: WEB 720p
+            qualities:
+              - WEBDL-720p
+              - WEBRip-720p
+          - name: HDTV-720p
+          - name: Bluray-576p
+          - name: Bluray-480p
+          - name: WEB 480p
+            qualities:
+              - WEBDL-480p
+              - WEBRip-480p
+          - name: DVD
+          - name: SDTV
 
     # Local overrides on top of the TRaSH profile:
     custom_formats:
@@ -37,6 +112,42 @@ radarr:
         assign_scores_to:
           - name: UHD Bluray + WEB
             score: -50
+      # --- Best Available (SD-1080p) only ---------------------------------
+      # THE load-bearing score on this profile, exactly as on the Sonarr side.
+      # Old films attract AI-upscaled fake "1080p" releases; without this floor a
+      # movie grabs its correct DVD/480p source and then immediately "upgrades"
+      # to an upscale of that same source -- churn AND worse picture, since an
+      # upscale adds no detail. Native-1080p films assigned here are unaffected:
+      # they are not upscales, so the CF does not match them.
+      - trash_ids:
+          - bfd8eb01832d646a0a89c4deb46f8564  # Upscaled
+        assign_scores_to:
+          - name: Best Available (SD-1080p)
+            score: -10000
+      # Standard junk floors. min_format_score is 0, so -10000 = hard reject.
+      - trash_ids:
+          - 90a6f9a284dff5103f6346090e6280c8  # LQ
+          - e204b80c87be9497a8a6eaff48f72905  # LQ (Release Title)
+          - ed38b889b31be83fda192888e2286d83  # BR-DISK
+          - b6832f586342ef70d9c128d40c07b872  # Bad Dual Groups
+          - b8cd450cbfa689c0259a01d9e29ba3d6  # 3D
+        assign_scores_to:
+          - name: Best Available (SD-1080p)
+            score: -10000
+      # Same mild non-English nudge as the UHD profile, for consistency.
+      - trash_ids:
+          - 0dc8aec3bd1c47cd6c40c46ecd27e846  # Language: Not English
+        assign_scores_to:
+          - name: Best Available (SD-1080p)
+            score: -50
+      # Belt-and-braces only -- DV P5 is 2160p, so it cannot reach a profile
+      # capped at 1080p. Scored anyway so the intent survives any future change
+      # to the quality range.
+      - trash_ids:
+          - 923b6abef9b17f937fab56cfcf89e1f1  # DV (w/o HDR fallback)
+        assign_scores_to:
+          - name: Best Available (SD-1080p)
+            score: -10000
 
     custom_format_groups:
       ################################################################################
