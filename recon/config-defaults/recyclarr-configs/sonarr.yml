@@ -26,6 +26,18 @@
 ##
 ## This profile is the one to assign when a show is stuck. See
 ## docs/sonarr-stuck-series.md.
+##
+## LOCAL CUSTOM FORMAT (not managed here -- lives only in Sonarr):
+##   "Upscaled (Unlabelled Groups)" scored -10000 below.
+## The stock `Upscaled` CF is title-based and only catches releases that admit
+## what they are. It misses `Star Trek Voyager SxxExx iNTERNAL MULTi 1080p WEB
+## x264-N3TFL1X` -- 82 of those were found blocklisted, and NOT ONE says
+## "upscale" anywhere in the title. Voyager has no HD master, so every one of
+## its episodes sits below this profile's WEB 1080p cutoff forever, which means
+## RSS can take an unlabelled upscale as an "upgrade" with no button pressed.
+## The CF is deliberately narrow: release group AND (720p OR 1080p). That group
+## also posts legitimate WEBDL-480p (26 such files are in the library), so
+## blocking it outright would be wrong.
 ################################################################################
 
 sonarr:
@@ -53,8 +65,15 @@ sonarr:
         # Wipes every CF not scored below back to 0, so the WEB-2160p x265/10bit
         # penalties and the anime tiers cannot leak in. x265 and 10bit stay at 0
         # deliberately: both are fine and common for DVD-era encodes.
+        #
+        # `except` protects a LOCAL custom format that Recyclarr cannot create or
+        # score, because it has no trash_id. Without this line every sync resets
+        # it to 0 and silently reopens the hole it exists to close. Any local CF
+        # added to this profile in future must be listed here too.
         reset_unmatched_scores:
           enabled: true
+          except:
+            - Upscaled (Unlabelled Groups)
         min_format_score: 0
         quality_sort: top
         upgrade:
