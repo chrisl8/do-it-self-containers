@@ -120,6 +120,9 @@ case "$IMAGE_NAME" in
     postgres_14-alpine|redis_7-alpine|infisical_*)
         OUTPUT_IMAGE_NAME="infisical"
         ;;
+    obsidian_*)
+        OUTPUT_IMAGE_NAME="obsidian"
+        ;;
     gluetun)
         OUTPUT_IMAGE_NAME="recon secure-browser"
         ;;
