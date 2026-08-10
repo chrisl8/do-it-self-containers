@@ -61,6 +61,13 @@ services:
       - WIREGUARD_PUBLIC_KEY=${WIREGUARD_PUBLIC_KEY}
       - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
       - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+      # Default (6s) is too short: DNS-over-tunnel right after a cold WireGuard
+      # handshake can take longer than that to start working, so gluetun's own
+      # startup healthcheck fails and it tears down/retries the VPN a few times
+      # before settling. That left `browser` (depends_on: service_healthy)
+      # permanently stuck in Created state once, since compose only checks
+      # depends_on once at `up` time. Give DNS more time before the first check.
+      - HEALTH_VPN_DURATION_INITIAL=30s
     restart: on-failure
   ts:
     container_name: browser-ts
