@@ -69,9 +69,6 @@ case "$IMAGE_NAME" in
     actual-server)
         OUTPUT_IMAGE_NAME="actual-budget quicken actual-budget-api" # Multiple names, space-separated
         ;;
-    code)
-        OUTPUT_IMAGE_NAME="collabora"
-        ;;
     pgvector_pg17|hub)
         OUTPUT_IMAGE_NAME="formbricks"
         ;;
@@ -106,7 +103,7 @@ case "$IMAGE_NAME" in
         OUTPUT_IMAGE_NAME="karakeep"
         ;;
     rabbitmq_3|postgres_15|documentserver)
-        OUTPUT_IMAGE_NAME="onlyoffice"
+        OUTPUT_IMAGE_NAME="eurooffice"
         ;;
     # Unique app images: match on name and IGNORE the tag (glob), so a version
     # bump (nextcloud 33->34, a new forgejo/infisical release, an ES point
@@ -139,7 +136,7 @@ case "$IMAGE_NAME" in
         OUTPUT_IMAGE_NAME="tsidp"
         ;;
     tinyfilemanager_*)
-        OUTPUT_IMAGE_NAME="filez"
+        OUTPUT_IMAGE_NAME="archive"
         ;;
     stirling-pdf_*)
         OUTPUT_IMAGE_NAME="stirling-pdf"
@@ -151,7 +148,7 @@ case "$IMAGE_NAME" in
         OUTPUT_IMAGE_NAME="paste"
         ;;
     ac)
-        OUTPUT_IMAGE_NAME="filez"
+        OUTPUT_IMAGE_NAME="archive"
         ;;
     prowlarr|sonarr|radarr|lidarr|mylar3|lazylibrarian|qbittorrent|sabnzbd|bazarr|decluttarr|flaresolverr)
         OUTPUT_IMAGE_NAME="recon"
