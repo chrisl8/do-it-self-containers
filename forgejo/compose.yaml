@@ -1,7 +1,7 @@
 services:
   forgejo:
     container_name: forgejo
-    image: codeberg.org/forgejo/forgejo:12
+    image: codeberg.org/forgejo/forgejo:16
     environment:
       - USER_UID=1000
       - USER_GID=1000
@@ -25,8 +25,8 @@ services:
       - homepage.weight=50
       - homepage.icon=/dashboard-icons/svg/forgejo.svg
       - homepage.href=https://forgejo.${TS_DOMAIN}
-      # DIUN: :12 already digest-watches for 12.x point releases. watch_repo with
-      # a bare-major regex additionally alerts when a NEW major (13, ...) appears
+      # DIUN: :16 already digest-watches for 16.x point releases. watch_repo with
+      # a bare-major regex additionally alerts when a NEW major (17, ...) appears
       # so we know to plan a deliberate major upgrade.
       - diun.watch_repo=true
       - diun.include_tags=^[0-9]+$
