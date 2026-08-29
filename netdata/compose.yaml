@@ -7,7 +7,12 @@ services:
     # This must be the ID of the Docker group.
     group_add:
       - ${DOCKER_GID:-985}
-    image: netdata/netdata
+    # netdata/netdata's bare/"latest" tag is byte-identical to their :edge
+    # (nightly) channel, not their latest stable release -- a well-known
+    # Netdata Docker Hub quirk, unlike almost every other project's "latest".
+    # :stable tracks their actual tagged releases (confirmed 2026-08-30:
+    # :stable's digest matches v2.11.0 exactly).
+    image: netdata/netdata:stable
     pid: host
     cap_add:
       - SYS_PTRACE
