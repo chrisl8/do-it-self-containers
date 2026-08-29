@@ -1,7 +1,7 @@
 services:
   stirling-pdf:
     container_name: stirling-pdf
-    image: stirlingtools/stirling-pdf:2.14.3
+    image: stirlingtools/stirling-pdf
     # Stirling is a Spring Boot JVM and its image sets MaxRAMPercentage=75, so unbounded its
     # heap can grow to ~75% of host RAM (~23 GiB on this 31 GiB box) -- the worst of the
     # host-RAM-ballooning JVMs (see the 2026-06-12 Elasticsearch livelock). JAVA_CUSTOM_OPTS
