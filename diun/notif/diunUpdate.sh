@@ -33,6 +33,16 @@ if [ ! -f "$OUTPUT_FILE" ]; then
     exit 1
 fi
 
+# Additive, purely informational sidecar file: one JSON line per (stack,
+# image) pair, so the web admin can show *which* image triggered a stack's
+# pending-update flag. Never read by update-containers-from-diun-list.sh --
+# OUTPUT_FILE's plain stack-name-per-line format is a hard contract with
+# all-containers.sh --container-list and must not change.
+DETAILS_FILE="/script/pendingContainerUpdateDetails.jsonl"
+if [ ! -f "$DETAILS_FILE" ]; then
+    touch "$DETAILS_FILE"
+fi
+
 IMAGE_NAME=$(echo "$DIUN_ENTRY_IMAGE" | sed 's/:/_/g' | cut -d '/' -f 3)
 
 # If the image name contains an @, we need to remove it and everything after it.
@@ -182,7 +192,12 @@ for name in $OUTPUT_IMAGE_NAME; do
         echo "Adding image $name to the update list file."
         echo "$name" >> "$OUTPUT_FILE"
     fi
+
+    DETAIL_LINE="{\"stack\":\"$name\",\"image\":\"$LAST_PART\"}"
+    if ! grep -qF "$DETAIL_LINE" "$DETAILS_FILE"; then
+        echo "$DETAIL_LINE" >> "$DETAILS_FILE"
+    fi
 done
 
-# Fix permissions on the file
-chown 1000:1000 "$OUTPUT_FILE"
+# Fix permissions on the files
+chown 1000:1000 "$OUTPUT_FILE" "$DETAILS_FILE"
