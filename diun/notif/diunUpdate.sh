@@ -58,10 +58,10 @@ case "$IMAGE_NAME" in
     sockpuppetbrowser|changedetection.io)
         OUTPUT_IMAGE_NAME="changedetection"
         ;;
-    postgis_17-3.5-alpine|redis_7.4-alpine)
+    postgis_17-3.5-alpine|redis_7.4-alpine|postgis_18-3.6-alpine)
         OUTPUT_IMAGE_NAME="dawarich"
         ;;
-    redis_7|postgres_16|tika|paperless-ngx)
+    redis_7|postgres_16|tika|paperless-ngx|postgres_18)
         OUTPUT_IMAGE_NAME="paperless"
         ;;
     couchdb)
@@ -70,10 +70,10 @@ case "$IMAGE_NAME" in
     portainer-ce)
         OUTPUT_IMAGE_NAME="portainer"
         ;;
-    mongo_6|your_spotify)
+    mongo_6|your_spotify|mongo_8)
         OUTPUT_IMAGE_NAME="your-spotify"
         ;;
-    mariadb_10)
+    mariadb_10|mariadb_12)
         OUTPUT_IMAGE_NAME="mariadb nextcloud" # Multiple names, space-separated
         ;;
     actual-server)
@@ -84,6 +84,14 @@ case "$IMAGE_NAME" in
         ;;
     valkey_8-alpine)
         OUTPUT_IMAGE_NAME="searxng"
+        ;;
+    # This host (not the shared module default) moved infisical/paperless/
+    # dawarich/searxng's redis-family sidecars all onto the SAME valkey:9-alpine
+    # tag via each folder's own compose.override.yaml (see the 2026-08-29
+    # version-drift upgrade plan) -- unlike the old per-stack-unique redis tags
+    # above, one tag now covers four stacks at once, so it maps to all of them.
+    valkey_9-alpine)
+        OUTPUT_IMAGE_NAME="infisical paperless dawarich searxng"
         ;;
     immich-machine-learning_*|immich-server_*|postgres_14-vectorchord0.4.3-pgvectors0.2.0|valkey_9)
         OUTPUT_IMAGE_NAME="immich"
@@ -124,7 +132,7 @@ case "$IMAGE_NAME" in
     elasticsearch_*|nextcloud_*)
         OUTPUT_IMAGE_NAME="nextcloud"
         ;;
-    postgres_14-alpine|redis_7-alpine|infisical_*)
+    postgres_14-alpine|redis_7-alpine|infisical_*|postgres_18-alpine)
         OUTPUT_IMAGE_NAME="infisical"
         ;;
     obsidian_*)
