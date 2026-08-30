@@ -67,6 +67,13 @@ case "$IMAGE_NAME" in
     couchdb)
         OUTPUT_IMAGE_NAME="obsidian-babel-livesync"
         ;;
+    # netdata/netdata's bare/"latest" tag is actually their nightly channel
+    # (see the version-drift upgrade plan, 2026-08-29) -- this host pins
+    # :stable instead, which changes the parsed IMAGE_NAME from the
+    # coincidentally-already-correct "netdata" to "netdata_stable".
+    netdata_stable)
+        OUTPUT_IMAGE_NAME="netdata"
+        ;;
     portainer-ce)
         OUTPUT_IMAGE_NAME="portainer"
         ;;
