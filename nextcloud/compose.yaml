@@ -52,7 +52,14 @@ services:
     restart: on-failure
   db:
     container_name: nextcloud-db
-    image: mariadb:10
+    # mariadb:10 -> 12: a breaking-change generation ("2026-08-mariadb12")
+    # gated by module.yaml's `generation` field for this container -- an
+    # existing install only receives this bump once it has migrated per
+    # docs/MAJOR_VERSION_UPGRADE_GOTCHAS.md and set user-config.yaml
+    # containers.nextcloud.pinned_generation to match. Nextcloud's own docs
+    # list 12.3 as the recommended MariaDB version for this server line. A
+    # fresh install has no pre-existing data to break and gets this directly.
+    image: mariadb:12
     volumes:
       - ${VOL_NEXTCLOUD_DB:-~/container-data}/container-mounts/nextcloud/db:/var/lib/mysql
     environment:

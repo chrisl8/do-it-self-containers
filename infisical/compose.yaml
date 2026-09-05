@@ -48,7 +48,16 @@ services:
     restart: on-failure
   infisical-db:
     container_name: infisical-db
-    image: postgres:14-alpine
+    # postgres:14-alpine -> 18-alpine and infisical-redis's redis:7-alpine ->
+    # valkey:9-alpine below are a breaking-change generation
+    # ("2026-08-postgres18-valkey") gated by module.yaml's `generation` field
+    # for this container -- an existing install only receives this bump once
+    # it has done the migration in docs/MAJOR_VERSION_UPGRADE_GOTCHAS.md and
+    # set user-config.yaml containers.infisical.pinned_generation to match.
+    # A fresh install has no pre-existing data to break and gets this
+    # directly. NOTE: postgres 18's image wants its volume mounted at
+    # /var/lib/postgresql (not .../data like every prior major).
+    image: postgres:18-alpine
     # Postgres caches an fd per relation file segment and deliberately fills
     # that cache up to max_files_per_process (default 1000), parking backends
     # at ~990 open files. Against Docker's default 1024 soft limit that reads
@@ -65,7 +74,7 @@ services:
       - POSTGRES_USER=infisical
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
-      - ${VOL_INFISICAL_DB:-~/container-data}/container-mounts/infisical/db:/var/lib/postgresql/data
+      - ${VOL_INFISICAL_DB:-~/container-data}/container-mounts/infisical/db:/var/lib/postgresql
     networks:
       - infisical-net
     healthcheck:
@@ -78,7 +87,16 @@ services:
     restart: on-failure
   infisical-redis:
     container_name: infisical-redis
-    image: redis:7-alpine
+    # redis:7-alpine -> Valkey: sidesteps the Redis 8 relicensing question,
+    # and Infisical's own Helm chart is separately adding Valkey support.
+    # Same breaking-change generation as infisical-db above -- see the note
+    # there and docs/MAJOR_VERSION_UPGRADE_GOTCHAS.md. An EXISTING redis:7.4.x
+    # install cannot just swap images: it writes RDB format version 12, which
+    # Valkey (forked at Redis 7.2.4) cannot read and crash-loops on -- the
+    # stale dump.rdb must be inspected and cleared as part of the migration,
+    # not just the image tag bumped. A fresh install's empty volume has
+    # nothing to migrate and is unaffected.
+    image: docker.io/valkey/valkey:9-alpine
     volumes:
       - ${VOL_INFISICAL_REDIS:-~/container-data}/container-mounts/infisical/redis:/data
     networks:
