@@ -447,6 +447,14 @@ containers:
     uses_tailscale: false
     start_order: "000"
     protected: true
+    # The apt-installed Infisical CLI (a host package, not a container) must
+    # stay in lock-step with the pinned server image above -- a CLI ahead of
+    # the server can silently blank every secret (see
+    # docs/INFISICAL_UPGRADE_RUNBOOK.md). all-containers.sh reads this on
+    # every --start and installs/holds it via apt if it drifts. Bump this
+    # in the same commit as the server's image tag, after confirming the new
+    # CLI version actually exports against that server.
+    cli_version: "0.43.116"
     # Breaking-change generation: postgres:14-alpine->18-alpine and
     # redis:7-alpine->valkey:9-alpine. An existing install is protected by
     # module-helper.js's update gate until it has migrated per
