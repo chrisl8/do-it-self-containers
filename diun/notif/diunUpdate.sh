@@ -199,8 +199,21 @@ case "$IMAGE_NAME" in
         ;;
 esac
 
+# Fleet-wide shared-image branches above (e.g. valkey_9-alpine) name every
+# stack across the WHOLE fleet that could use that image, not just the ones
+# actually installed on the host running this check -- diun has no visibility
+# into ~/containers itself (deliberately: several container folders hold real
+# secrets files), so all-containers.sh writes this manifest into diun's
+# already-mounted /script volume on every run. Fails open (no skip) if the
+# manifest hasn't been generated yet, matching the previous behavior.
+INSTALLED_FILE="/script/installed-containers.txt"
+
 # Loop over space-separated names
 for name in $OUTPUT_IMAGE_NAME; do
+    if [ -f "$INSTALLED_FILE" ] && ! grep -qxF "$name" "$INSTALLED_FILE"; then
+        echo "Skipping $name: not installed on this host (not in $INSTALLED_FILE)."
+        continue
+    fi
     if grep -q "$name" "$OUTPUT_FILE"; then
         echo "Image $name is already in the update list file."
     else
