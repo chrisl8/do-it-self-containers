@@ -460,7 +460,10 @@ services:
       REMOVE_STALLED: True
       REMOVE_UNMONITORED: False
       SEARCH_BETTER: True
-      SEARCH_MISSING: True
+      # Off: it re-grabbed titles deliberately deleted in Jellyfin (Clue,
+      # Europa Report, 2026-09-24) and showed no other benefit. RSS and
+      # scripts/media-stall-check.js cover genuinely missing items.
+      SEARCH_MISSING: False
       DETECT_DELETIONS: True
       # --- Instances ---
       # All targets share gluetun's network namespace, so reach them via
