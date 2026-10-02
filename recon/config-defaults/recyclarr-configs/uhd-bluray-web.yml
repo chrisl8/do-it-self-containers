@@ -105,10 +105,11 @@ radarr:
         assign_scores_to:
           - name: UHD Bluray + WEB
             score: -10000
-      # Gently deprioritize non-English releases of English-language titles.
-      # Mild (not a hard block) so a foreign-original still grabs when intended.
+      # Penalize releases lacking the title's ORIGINAL-language audio (e.g. a French dub of an
+      # English film). NOT "Not English": that blocked every foreign-original film, since
+      # -50 under min_format_score 0 is a hard reject (Victims of Sin 1951, 2026-10).
       - trash_ids:
-          - 0dc8aec3bd1c47cd6c40c46ecd27e846  # Language: Not English
+          - d6e9318c875905d6cfb5bee961afcea9  # Language: Not Original
         assign_scores_to:
           - name: UHD Bluray + WEB
             score: -50
@@ -134,9 +135,9 @@ radarr:
         assign_scores_to:
           - name: Best Available (SD-1080p)
             score: -10000
-      # Same mild non-English nudge as the UHD profile, for consistency.
+      # Same original-language rule as the UHD profile, for consistency.
       - trash_ids:
-          - 0dc8aec3bd1c47cd6c40c46ecd27e846  # Language: Not English
+          - d6e9318c875905d6cfb5bee961afcea9  # Language: Not Original
         assign_scores_to:
           - name: Best Available (SD-1080p)
             score: -50
