@@ -30,12 +30,36 @@ services:
       - homepage.href=https://jellyfin.${TS_DOMAIN}
       - homepage.widget.type=jellyfin
       - homepage.widget.key=${API_KEY}
-      - homepage.widget.url=https://jellyfin.${TS_DOMAIN}
+      # Via homepage-proxy (port 8443 on the TS node); see homepage-proxy/ for why.
+      - homepage.widget.url=https://jellyfin.${TS_DOMAIN}:8443
       - homepage.widget.enableBlocks=true
       - homepage.widget.fields=["movies", "songs"]
     # GPU acceleration: if you have an NVIDIA GPU and nvidia-container-toolkit
     # installed, create a compose.override.yaml with the GPU config. See
     # docs or the gitignored compose.override.yaml on the maintainer's system.
+    restart: on-failure
+  # Translates the Homepage widget's legacy /emby + ?api_key= calls into what
+  # Jellyfin 12.1+ accepts (header auth, no /emby prefix). Only Counts and
+  # Sessions are exposed. Remove once Homepage's Jellyfin widget is fixed upstream.
+  homepage-proxy:
+    container_name: jellyfin-homepage-proxy
+    image: nginx:alpine
+    environment:
+      - API_KEY=${API_KEY}
+    volumes:
+      - ./homepage-proxy/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+    networks:
+      - jellyfin-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:80/healthz"]
+      start_period: 120s
+      start_interval: 5s
+      interval: 5m
+      timeout: 5s
+      retries: 3
+    depends_on:
+      jellyfin:
+        condition: service_healthy
     restart: on-failure
   ts:
     container_name: jellyfin-ts
