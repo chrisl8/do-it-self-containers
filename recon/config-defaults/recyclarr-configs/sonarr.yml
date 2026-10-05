@@ -122,14 +122,31 @@ sonarr:
         assign_scores_to:
           - name: WEB-2160p
             score: -50
-      # Anime: prefer English dub (Dual Audio = JP + EN) WITHOUT requiring it, so
-      # sub-only airing shows still grab. The right fix for the "kept getting
-      # non-English anime" pain — a positive nudge, not a ban.
+      # Anime: prefer English audio WITHOUT requiring it, so sub-only airing
+      # shows still grab. A positive nudge, not a ban.
+      #
+      # The nudge has to out-weigh the anime tier scores (best seen ~1300-1400),
+      # otherwise a dub that arrives AFTER a Japanese copy scores lower than it,
+      # is not an upgrade, sits in importPending, and decluttarr's
+      # remove_failed_imports deletes + blocklists it -> Sonarr falls back to
+      # Japanese. That is how SPY x FAMILY S1E10/E11 and others ended up
+      # Japanese-only (2026-10). 2000 beats any tier, so a dub always upgrades a
+      # Japanese file and a Japanese release can never replace a dub.
+      #
+      # "Dubs Only" is TRaSH's -10000 for dub-only releases (e.g. Yameii's
+      # "[English Dub]" CR WEB-DL). Our dub source IS dub-only, so floor-ing it
+      # was wrong for this library. Its regex excludes Dual/Multi Audio, so it
+      # never overlaps with Anime Dual Audio.
+      #
+      # Limit: Sonarr compares QUALITY first. A WEB-DL dub still will not
+      # replace a Bluray Japanese file; only the common airing case (WEB vs WEB)
+      # and the below-minimum-score case are fixed.
       - trash_ids:
           - 418f50b10f1907201b6cfdf881f467b7  # Anime Dual Audio
+          - 9c14d194486c4014d422adc64092d794  # Dubs Only
         assign_scores_to:
           - name: '[Anime] Remux-1080p'
-            score: 100
+            score: 2000
       # --- Best Available (SD-1080p) only ---------------------------------
       # THE load-bearing score on this profile. Every 720p/1080p "release" of a
       # DVD-era show is an AI upscale of the SD master. Without this floor,
