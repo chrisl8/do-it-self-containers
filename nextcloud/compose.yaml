@@ -4,7 +4,7 @@ services:
     # Pinned to a major: Nextcloud refuses to skip majors, so bump deliberately
     # one major at a time. DIUN digest-watches :34 for 34.0.x patches; the
     # watch_repo label below additionally alerts when a new major (35, ...) ships.
-    image: nextcloud:34
+    image: nextcloud:35
     container_name: nextcloud
     volumes:
       - ${VOL_NEXTCLOUD_HTML:-~/container-data}/container-mounts/nextcloud/html:/var/www/html
