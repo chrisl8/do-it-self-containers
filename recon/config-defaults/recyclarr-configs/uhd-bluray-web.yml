@@ -1,8 +1,9 @@
 # yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
 ################################################################################
-## Radarr — single instance managing TWO quality profiles:
+## Radarr — single instance managing THREE quality profiles:
 ##   - UHD Bluray + WEB          (default for everything; TRaSH 64fb5f98...)
 ##   - Best Available (SD-1080p) (LOCAL, no trash_id -- see below)
+##   - Best Available (up to 4K) (LOCAL; SD..2160p, the Seerr default)
 ##
 ## Recyclarr forbids two config instances pointing at the same Radarr URL
 ## ("Split Instances"), so both profiles live in this one instance block. That
@@ -94,6 +95,54 @@ radarr:
           - name: DVD
           - name: SDTV
 
+      # LOCAL profile #2 -- the DEFAULT for new movie requests (point Seerr's
+      # Radarr default here). UHD Bluray + WEB is 2160p-ONLY, so a film with no 4K
+      # release is rejected "not wanted in profile" and silently never grabs
+      # (Dracula's Daughter 1936, 2026-10-13: had to be hand-switched). This
+      # profile takes the best release that exists NOW (SDTV up to 2160p) and
+      # upgrades to Bluray-2160p automatically if one shows up.
+      # Its custom-format scoring MIRRORS UHD Bluray + WEB (see the block below)
+      # so 4K picks are chosen the same way, rather than being a blank profile.
+      - name: Best Available (up to 4K)
+        reset_unmatched_scores:
+          enabled: true
+        min_format_score: 0
+        quality_sort: top
+        upgrade:
+          allowed: true
+          until_quality: Bluray-2160p
+          until_score: 10000
+        # Ordered best -> worst, matching UHD Bluray + WEB's ranking at the top
+        # (Bluray-2160p > WEB 2160p > Remux-2160p), then the SD profile's list.
+        # Remux-1080p stays EXCLUDED for the same size reason as there.
+        qualities:
+          - name: Bluray-2160p
+          - name: WEB 2160p
+            qualities:
+              - WEBDL-2160p
+              - WEBRip-2160p
+          - name: Remux-2160p
+          - name: Bluray-1080p
+          - name: WEB 1080p
+            qualities:
+              - WEBDL-1080p
+              - WEBRip-1080p
+          - name: HDTV-1080p
+          - name: Bluray-720p
+          - name: WEB 720p
+            qualities:
+              - WEBDL-720p
+              - WEBRip-720p
+          - name: HDTV-720p
+          - name: Bluray-576p
+          - name: Bluray-480p
+          - name: WEB 480p
+            qualities:
+              - WEBDL-480p
+              - WEBRip-480p
+          - name: DVD
+          - name: SDTV
+
     # Local overrides on top of the TRaSH profile:
     custom_formats:
       # Dolby Vision WITHOUT an HDR10 fallback = DV Profile 5. Forces tonemap
@@ -148,6 +197,151 @@ radarr:
           - 923b6abef9b17f937fab56cfcf89e1f1  # DV (w/o HDR fallback)
         assign_scores_to:
           - name: Best Available (SD-1080p)
+            score: -10000
+
+      # --- Best Available (up to 4K) only ---------------------------------
+      # A copy of every non-zero score on UHD Bluray + WEB (audio-codec tiers, HDR,
+      # release-group tiers, repacks, and the -10000 hard rejects incl. x265 (no
+      # HDR/DV) and DV P5), so 4K picks are chosen the same way on both profiles.
+      # Re-diff against UHD Bluray + WEB if TRaSH changes its scores.
+      - trash_ids:
+          - 496f355514737f7d83bf7aa4d24f8169  # TrueHD ATMOS
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 5000
+      - trash_ids:
+          - 2f22d89048b01681dde8afe203bf2e95  # DTS X
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 4500
+      - trash_ids:
+          - 417804f7f2c4308c1f4c5d380d4c4475  # ATMOS (undefined)
+          - 1af239278386be2919e1bcee0bde047e  # DD+ ATMOS
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 3000
+      - trash_ids:
+          - 3cafb66171b47f226146a0770576870f  # TrueHD
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 2750
+      - trash_ids:
+          - dcf3ec6938fa32445f590a4da84256cd  # DTS-HD MA
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 2500
+      - trash_ids:
+          - a570d4a0e56a2874b64e5bfa55202a1b  # FLAC
+          - e7c2fcae07cbada050a0af3357491d7b  # PCM
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 2250
+      - trash_ids:
+          - 8e109e50e0a0b83a5098b056e13bf6db  # DTS-HD HRA
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 2000
+      - trash_ids:
+          - 4d74ac4c4db0b64bff6ce0cffef99bf0  # UHD Bluray Tier 01
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 1800
+      - trash_ids:
+          - a58f517a70193f8e578056642178419d  # UHD Bluray Tier 02
+          - 185f1dd7264c4562b9022d963ac37424  # DD+
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 1750
+      - trash_ids:
+          - e71939fae578037e7aed3ee219bbe7c1  # UHD Bluray Tier 03
+          - c20f169ef63c5f40c2def54abaf4438e  # WEB Tier 01
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 1700
+      - trash_ids:
+          - 403816d65392c79236dcb6dd591aeda4  # WEB Tier 02
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 1650
+      - trash_ids:
+          - af94e0fe497124d1f9ce732069ec8c3b  # WEB Tier 03
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 1600
+      - trash_ids:
+          - f9f847ac70a0af62ea4a08280b859636  # DTS-ES
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 1500
+      - trash_ids:
+          - 1c1a4c5e823891c75bc50380a6866f73  # DTS
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 1250
+      - trash_ids:
+          - 240770601cc226190c367ef59aba7463  # AAC
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 1000
+      - trash_ids:
+          - c2998bd0d90ed5621d8df281e839436e  # DD
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 750
+      - trash_ids:
+          - 493b6d1dbec3c3364c59d7607f7e3405  # HDR
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 500
+      - trash_ids:
+          - 16622a6911d1ab5d5b8b713d5b0036d4  # CRiT
+          - 7737598007e71665c5edc7f1626bfbf1  # IMF
+          - 2a6039655313bf5dab1e43523b62c374  # MA
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 20
+      - trash_ids:
+          - cc5e51a9e85a6296ceefe097a77f12f4  # BCORE
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 15
+      - trash_ids:
+          - 5caaaa1c08c1742aa4342d8c4cc463f2  # Repack3
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 7
+      - trash_ids:
+          - ae43b294509409a6a13919dedd4764c4  # Repack2
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 6
+      - trash_ids:
+          - e7718d7a3ce595f289bfee26adc178f5  # Repack/Proper
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: 5
+      - trash_ids:
+          - d6e9318c875905d6cfb5bee961afcea9  # Language: Not Original
+        assign_scores_to:
+          - name: Best Available (up to 4K)
+            score: -50
+      - trash_ids:
+          - 923b6abef9b17f937fab56cfcf89e1f1  # DV (w/o HDR fallback)
+          - bfd8eb01832d646a0a89c4deb46f8564  # Upscaled
+          - 90a6f9a284dff5103f6346090e6280c8  # LQ
+          - e204b80c87be9497a8a6eaff48f72905  # LQ (Release Title)
+          - ed38b889b31be83fda192888e2286d83  # BR-DISK
+          - b6832f586342ef70d9c128d40c07b872  # Bad Dual Groups
+          - b8cd450cbfa689c0259a01d9e29ba3d6  # 3D
+          - 839bea857ed2c0a8e084f3cbdbd65ecb  # x265 (no HDR/DV)
+          - cae4ca30163749b891686f95532519bd  # AV1
+          - cc444569854e9de0b084ab2b8b1532b2  # Black and White Editions
+          - 0a3f082873eb454bde444150b70253cc  # Extras
+          - e6886871085226c3da1830830146846c  # Generated Dynamic HDR
+          - c465ccc73923871b3eb1802042331306  # Line/Mic Dubbed
+          - 712d74cd88bceb883ee32f773656b1f5  # Sing-Along Versions
+        assign_scores_to:
+          - name: Best Available (up to 4K)
             score: -10000
 
     custom_format_groups:
