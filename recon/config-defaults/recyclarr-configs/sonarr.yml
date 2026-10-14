@@ -219,6 +219,16 @@ sonarr:
             score: -10000
           - name: Best Available (up to 4K)
             score: -10000
+      # Foreign dubs of English shows. WEB-2160p gets this from TRaSH; this
+      # profile had no language rule at all, so Clone Wars S3E15/E17/E22 grabbed
+      # NORWEGiAN/DANiSH Blu-rays (2026-10-14). -10000 matches WEB-2160p; unlike
+      # "Not English" this only fires when the audio is not the show's ORIGINAL
+      # language, so foreign-original shows are unaffected.
+      - trash_ids:
+          - ae575f95ab639ba5d15f663bf019e3e8  # Language: Not Original
+        assign_scores_to:
+          - name: Best Available (SD-1080p)
+            score: -10000
       # Belt-and-braces on the 1080p-capped profile (DV P5 cannot reach it); REAL
       # on 'up to 4K', which allows 2160p.
       - trash_ids:
