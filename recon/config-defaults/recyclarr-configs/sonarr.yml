@@ -1,9 +1,10 @@
 # yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
 ################################################################################
-## Sonarr — single instance managing THREE quality profiles:
+## Sonarr — single instance managing FOUR quality profiles:
 ##   - WEB-2160p                (standard TV; TRaSH d1498e7d...)
 ##   - [Anime] Remux-1080p      (anime;       TRaSH 20e0fc95...)
 ##   - Best Available (SD-1080p) (LOCAL, no trash_id -- see below)
+##   - Best Available (up to 4K) (LOCAL; SD..WEB-2160p, the Seerr default)
 ##
 ## Recyclarr forbids two config instances pointing at the same Sonarr URL
 ## ("Split Instances"), so all profiles live here. quality_definition is
@@ -104,6 +105,51 @@ sonarr:
           - name: DVD
           - name: SDTV
 
+      # LOCAL profile #2 -- the DEFAULT for new requests (point Seerr's Sonarr
+      # default here). WEB-2160p is 2160p-ONLY: a show with no 4K master (most
+      # of the back catalog) has every release rejected "not wanted in profile"
+      # and silently never grabs, so nearly every request needed hand-switching
+      # (Clone Wars S1-6, 2026-10-13: 57 releases, 0 usable). This profile takes
+      # the best that exists NOW (down to SDTV) and upgrades to WEB 2160p
+      # automatically if one shows up.
+      # Same guards as Best Available below, plus the DV P5 floor, which matters
+      # again because 2160p is allowed here (see custom_formats).
+      - name: Best Available (up to 4K)
+        reset_unmatched_scores:
+          enabled: true
+          except:
+            - Upscaled (Unlabelled Groups)
+        min_format_score: 0
+        quality_sort: top
+        upgrade:
+          allowed: true
+          until_quality: WEB 2160p
+          until_score: 10000
+        qualities:
+          - name: WEB 2160p
+            qualities:
+              - WEBDL-2160p
+              - WEBRip-2160p
+          - name: Bluray-1080p
+          - name: WEB 1080p
+            qualities:
+              - WEBDL-1080p
+              - WEBRip-1080p
+          - name: HDTV-1080p
+          - name: Bluray-720p
+          - name: WEB 720p
+            qualities:
+              - WEBDL-720p
+              - WEBRip-720p
+          - name: HDTV-720p
+          - name: Bluray-480p
+          - name: WEB 480p
+            qualities:
+              - WEBRip-480p
+              - WEBDL-480p
+          - name: DVD
+          - name: SDTV
+
     # Local overrides on top of the TRaSH profiles:
     custom_formats:
       # DV Profile 5 (Dolby Vision with no HDR10 base layer). This is where it
@@ -159,6 +205,8 @@ sonarr:
         assign_scores_to:
           - name: Best Available (SD-1080p)
             score: -10000
+          - name: Best Available (up to 4K)
+            score: -10000
       # Standard junk floors. min_format_score is 0, so -10000 = hard reject.
       - trash_ids:
           - 9c11cd3f07101cdba90a2d81cf0e56b4  # LQ
@@ -168,11 +216,16 @@ sonarr:
         assign_scores_to:
           - name: Best Available (SD-1080p)
             score: -10000
-      # Belt-and-braces only -- DV P5 cannot reach a 1080p-capped profile.
+          - name: Best Available (up to 4K)
+            score: -10000
+      # Belt-and-braces on the 1080p-capped profile (DV P5 cannot reach it); REAL
+      # on 'up to 4K', which allows 2160p.
       - trash_ids:
           - 9b27ab6498ec0f31a3353992e19434ca  # DV (w/o HDR fallback)
         assign_scores_to:
           - name: Best Available (SD-1080p)
+            score: -10000
+          - name: Best Available (up to 4K)
             score: -10000
 
     # CF groups for the standard WEB-2160p profile. The anime profile pulls in
