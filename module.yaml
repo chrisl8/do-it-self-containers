@@ -454,7 +454,7 @@ containers:
     # every --start and installs/holds it via apt if it drifts. Bump this
     # in the same commit as the server's image tag, after confirming the new
     # CLI version actually exports against that server.
-    cli_version: "0.43.116"
+    cli_version: "0.43.139"
     # Breaking-change generation: postgres:14-alpine->18-alpine and
     # redis:7-alpine->valkey:9-alpine. An existing install is protected by
     # module-helper.js's update gate until it has migrated per
