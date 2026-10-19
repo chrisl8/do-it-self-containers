@@ -54,8 +54,16 @@ sonarr:
         reset_unmatched_scores:
           enabled: true
       - trash_id: 20e0fc959f1f1704bed501f23bdae76f  # [Anime] Remux-1080p
+        # `except` protects a LOCAL custom format (no trash_id, so Recyclarr
+        # cannot create or score it): "Dual Audio (Language Tagged)" = English
+        # AND Japanese both required, scored 2000 by hand in Sonarr. Netflix
+        # NTG WEB-DLs are real jpn+eng dual audio but carry no marker in the
+        # title, so the title-regex Dual Audio CF scores them 0 and they fall
+        # under min_format_score. Recreate it by hand if Sonarr is rebuilt.
         reset_unmatched_scores:
           enabled: true
+          except:
+            - Dual Audio (Language Tagged)
       # LOCAL profile -- no trash_id, because TRaSH has nothing to inherit from
       # (see header). Assign a series to this by hand when WEB-2160p can never
       # match it: DVD-era shows, or anything with a 1080p release but no 4K.
