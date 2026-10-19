@@ -452,7 +452,11 @@ services:
       REMOVE_BAD_FILES: True
       REMOVE_DONE_SEEDING: False
       REMOVE_FAILED_DOWNLOADS: True
-      REMOVE_FAILED_IMPORTS: True
+      # Off: it deleted healthy multi-episode usenet packs ("01 ~ 13") whose
+      # names Sonarr can't parse -- "Automatic import is not possible" is an
+      # importBlocked warning that needs a Manual Import, not a removal.
+      # Genuinely dead downloads are still handled by FAILED_DOWNLOADS/STALLED.
+      REMOVE_FAILED_IMPORTS: False
       REMOVE_METADATA_MISSING: True
       REMOVE_MISSING_FILES: True
       REMOVE_ORPHANS: False
