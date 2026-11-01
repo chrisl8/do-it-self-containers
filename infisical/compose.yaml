@@ -26,6 +26,11 @@ services:
       - REDIS_URL=redis://infisical-redis:6379
       # Telemetry opt-out
       - TELEMETRY_ENABLED=false
+      # Server-wide ceiling on machine-identity token lifetime. Default is 90d
+      # and it silently overrides the identity's own 10-year TTL (set by
+      # scripts/setup-infisical.sh), so the token in ~/credentials/infisical.env
+      # expired after 90 days and every script reading secrets got empty values.
+      - MAX_MACHINE_IDENTITY_TOKEN_AGE=3650d
     networks:
       - infisical-net
     healthcheck:
