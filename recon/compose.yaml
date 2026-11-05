@@ -577,3 +577,21 @@ services:
       gluetun:
         condition: service_healthy
     network_mode: "service:gluetun"
+# Pin the project's default network. Sonarr and Radarr (inside gluetun's netns)
+# call Jellyfin through this network's gateway (<subnet>.1:8096, the host-published
+# port) for their Connect > Jellyfin "update library" notification. Unpinned, Docker
+# hands out the next free /24 whenever the network is recreated, and the gateway IP
+# saved in those apps goes stale; the notification then times out SILENTLY (a Warn
+# in radarr.txt) and new media never reaches Jellyfin. That happened when the net
+# moved from 172.16.49.0/24 to 172.16.48.0/24. Gluetun's firewall allows its own
+# subnet, which is why the gateway is reachable at all.
+# 172.31.48.0/24 sits at the far end of the daemon's 172.16.0.0/12 address pool
+# (default-address-pools, /24 each, handed out sequentially from 172.16.1.0), so
+# no dynamically allocated network will ever collide with it. Gateway = 172.31.48.1.
+# If you change this, update the host field of the Jellyfin connection in BOTH
+# Radarr and Sonarr (Settings > Connect > Jellyfin).
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.31.48.0/24
